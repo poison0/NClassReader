@@ -1,24 +1,12 @@
 var fs = require('fs');
 
-//拷贝文件
-export function copyFile(sourcePath,destPath,callback) {
-    fs.exists("./books",exists => {
-        if(exists){
-            fs.copyFile(sourcePath,destPath,callback)
-        }else{
-            fs.mkdir('./books',function(error){
-                if(error){
-                    console.log(error);
-                    return false;
-                }
-                console.log('创建目录成功');
-                fs.copyFile(sourcePath,destPath,callback)
-            })
+export function getBinaryInfo(path,collback){
+    fs.readFile(path,function(err, bytes) {
+        if (err) {
+            console.log("读取文件失败")
+        } else {
+            var buf = new Buffer(bytes); //将文件中读取的二进制数据，存入一个buffer对象
+            collback(buf);
         }
     })
-
-}
-//拷贝文件
-export function deleteFile(sourcePath) {
-    fs.unlinkSync(sourcePath)
 }

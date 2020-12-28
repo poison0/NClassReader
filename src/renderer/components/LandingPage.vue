@@ -13,10 +13,12 @@
         <div class="content">
             <div class="-left-content">
                 <div class="bottomNav">
-                    <div class="bottomDiv">
-                        <a-button type="primary" icon="file-search" block @click="upload()">
-                            上传
-                        </a-button>
+                    <div class="bottomDiv container">
+                        <div class="box" @click="upload()">
+                            <div class="img">
+                                上传
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="bookArea">
@@ -28,7 +30,7 @@
                 </div>
                 <div class="-right-content-book" :style="'height:'+(pageHeight-90)+'px'">
                     <div class="row-line">
-                        <div v-for="(hex,index) in hexArray" style="min-width: 25px" >
+                        <div v-for="(hex,index) in hexArray" class="single" >
                             <div >{{hex.toUpperCase()}}</div>
                         </div>
                     </div>
@@ -193,12 +195,15 @@
                     width: 100%;
                     height: 50px;
                     display: flex;
-                    border-bottom: 1px solid #E4E4E4;
+                    /*border-bottom: 1px solid #E4E4E4;*/
                     flex-direction: row;
                     justify-content: center;
                     align-items: center;
 
                     .bottomDiv {
+                        font-family:Calibri 微软雅黑,serif;
+                        font-size: 16px;
+                        font-weight: bold;
                         width: 90%;
                     }
 
@@ -216,11 +221,35 @@
                 background-color: #E4E4E4;
                 /*position: relative;*/
                 .row-line{
+                    font-family: Humanist;
                     display: flex;
                     flex-direction: row;
                     flex-wrap: wrap;
                     cursor: text;
-                    max-width: 400px;
+                    max-width: 640px;
+                    *::selection{
+                        background: none repeat scroll 0 0 #FFA110;
+                        color:#fff;
+                        text-shadow:none;
+                    }
+                    line-height: 25px;
+                    height: 25px;
+                    .single{
+                        font-size: 16px;
+                        text-align:center;
+                        min-width: 40px;
+                        border-radius: 3px;
+                        background: #ffffff;
+                        box-shadow: inset 2px 2px 3px #cccccc,
+                        inset -2px -2px 3px #fafafa;
+                        :hover{
+                            border-radius: 3px;
+                            background: linear-gradient(145deg, #cccccc, #fafafa);
+                            box-shadow:  2px 2px 3px #cccccc,
+                            -2px -2px 3px #fafafa;
+                        }
+                    }
+
                 }
                 .-right-bar {
                     flex-shrink: 0;
@@ -343,6 +372,58 @@
         .ant-btn-primary{
             background-color: #0F4DA8;
             border-color:#0F4DA8;
+        }
+        /*拟态*/
+        .container{
+            width: 700px;
+            height: 600px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .container .box{
+            display: flex;
+            justify-content: space-around;
+            flex-direction: column;
+            align-items: center;
+            align-content: center;
+            width: 180px;
+            height: 40px;
+            margin: 20px;
+        }
+        .container .box .img{
+            color: #0F4DA8;
+            width: 180px;
+            height: 40px;
+            box-shadow: 18px 18px 30px rgba(0, 0, 0, 0.1),
+            -18px -18px 30px rgba(255, 255, 255, 1);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #efeeee;
+            transition: box-shadow .2s ease-out;
+            position: relative;
+        }
+
+        .container .box .img  img{
+            width: 60px;
+            transition: width 0.2s ease-out;
+        }
+        .container .box p{
+            color: slategrey;
+        }
+        .container .box .img:active{
+            box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.2),
+            0px 0px 0px rgba(255, 255, 255, 0.8),
+            inset 18px 18px 30px rgba(0, 0, 0, 0.1),
+            inset -18px -18px 30px rgba(255, 255, 255, 1);
+            transition: box-shadow .2s ease-out;
+        }
+        .container .box .img:active img{
+            width: 58px;
+            transition: width 0.2s ease-out;
         }
     }
 

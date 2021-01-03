@@ -35,6 +35,6 @@
   ::-webkit-scrollbar-thumb {
     border-radius: 99px; /*滚动条的圆角*/
     /*-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);*/
-    background-color: #D6D6D4;  /*滚动条的背景颜色*/
+    background-color: #C3D6E5;  /*滚动条的背景颜色*/
   }
 </style>

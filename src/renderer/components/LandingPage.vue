@@ -94,6 +94,7 @@
                 this.getMinorVersion();
                 this.getMajorVersion();
                 this.getConstantPoolCount();
+                this.getConstantPool();
                 console.log(this.classFile)
             },
             //读取魔数
@@ -114,8 +115,129 @@
             },
             //读取常量池
             getConstantPool() {
-                this.classFile.constant_pool = this.getFields(2, "常量池")
+                this.classFile.constant_pool = this.getConstantPoolAttr(this.classFile.constant_pool_count.value)
             },
+            //获取一个常量池的属性
+            //num : 常量池个数
+            //CONSTANT_Utf8_info 1 UTF-8编码的字符串
+            //CONSTANT_Integer_info 3 整型字面量
+            //CONSTANT_Float_info 4 浮点型字面量
+            //CONSTANT_Long_info 5 长整型字面量
+            //CONSTANT_Double_info 6 双精度浮点型字面量
+            //CONSTANT_Class_info 7 类或接口的符号引用
+            //CONSTANT_String_info 8 字符串类型字面量
+            //CONSTANT_Fieldref_info 9 字段的符号引用
+            //CONSTANT_Methodref_info 10 类中方法的符号引用
+            //CONSTANT_InterfaceMethodref_info 11 接口中方法的符号引用
+            //CONSTANT_NameAndType_info 12 字段或方法的部分符号引用
+            //CONSTANT_MethodHandle_info 15 表示方法句柄
+            //CONSTANT_MethodType_info 16 表示方法类型
+            //CONSTANT_InvokeDynamic_info 18 表示一个动态方法调用点
+            getConstantPoolAttr(num){
+                let constantPool = [];
+                for (let i = 1; i <= num-1; i++) {
+                    let attr = {};
+                    //获取tag值
+                    let tag = this.getFields(1,"值")
+                    attr["tag"] = tag;
+                    switch (tag.value) {
+                        case 1:
+                            attr["type"] = "CONSTANT_utf8"
+                            let length = this.getFields(2,"长度")
+                            attr["length"] = length;
+                            //获取内容
+                            attr["bytes"] = this.getStr(length.value,"字符串")
+                            break;
+                        case 3:
+                            attr["type"] = "CONSTANT_Integer"
+                            attr["bytes"] = this.getFields(4,"整型")
+                            break;
+                        case 4:
+                            attr["type"] = "CONSTANT_Float"
+                            attr["bytes"] = this.getFields(4,"浮点型")
+                            break;
+                        case 5:
+                            attr["type"] = "CONSTANT_Long"
+                            attr["high_bytes"] = this.getFields(4,"长整型")
+                            attr["low_bytes"] = this.getFields(4,"长整型")
+                            break;
+                        case 6:
+                            attr["type"] = "CONSTANT_Double"
+                            attr["high_bytes"] = this.getFields(4,"双精度浮点型")
+                            attr["low_bytes"] = this.getFields(4,"双精度浮点型")
+                            break;
+                        case 7:
+                            attr["type"] = "CONSTANT_Class"
+                            //对常量池的一个有效索引
+                            attr["name_index"] = this.getFields(2,"类或接口的符号引用")
+                            break;
+                        case 8:
+                            attr["type"] = "CONSTANT_String"
+                            attr["string_index"] = this.getFields(2,"字符串类型字面量")
+                            break;
+                        case 9:
+                            attr["type"] = "CONSTANT_Fieldref"
+                            attr["class_index"] = this.getFields(2,"字段的符号引用")
+                            attr["name_and_type_index"] = this.getFields(2,"字段的名称和描述符")
+                            break;
+                        case 10:
+                            attr["type"] = "CONSTANT_Methodref"
+                            attr["class_index"] = this.getFields(2,"类中方法的符号引用")
+                            attr["name_and_type_index"] = this.getFields(2,"类中方法的名称和描述符")
+                            break;
+                        case 11:
+                            attr["type"] = "CONSTANT_InterfaceMethodref"
+                            attr["class_index"] = this.getFields(2,"接口中方法的符号引用")
+                            attr["name_and_type_index"] = this.getFields(2,"接口中方法的名称和描述符")
+                            break;
+                        case 12:
+                            attr["type"] = "CONSTANT_NameAndType"
+                            attr["name_index"] = this.getFields(2,"方法或字段的部分符号引用")
+                            attr["descriptor_index"] = this.getFields(2,"有效的字段描述符或者方法描述符")
+                            break;
+                        case 15:
+                            attr["type"] = "CONSTANT_MethodHandle"
+                            attr["reference_kind"] = this.getFields(1,"句柄类型")
+                            attr["reference_index"] = this.getFields(2,"句柄名称")
+                            break;
+                        case 16:
+                            attr["type"] = "CONSTANT_MethodType"
+                            attr["descriptor_index"] = this.getFields(1,"方法的描述符")
+                            break;
+                        case 18:
+                            attr["type"] = "CONSTANT_InvokeDynamic"
+                            attr["bootstrap_method_attr_index"] = this.getFields(2,"引导方法表的索引")
+                            attr["name_and_type_index"] = this.getFields(2,"方法名和方法描述符")
+                            break;
+                    }
+                    constantPool.push(attr);
+                    //因为jvm开发时是处于32位机为主流的时代，所以为了向下兼容，double和long类型的常量占两个空间
+                    if (tag.value === 5 || tag.value === 6) {
+                        constantPool.push({
+                            type:"empty",
+                        });
+                        i++;
+                    }
+                }
+                return constantPool;
+            },
+            //获取字符串
+            getStr(num,typeName){
+                let start = this.readIndex;
+                let u = {
+                    startIndex: start,
+                    endIndex: 1,
+                    hexArray: [],
+                    typeName: typeName,
+                    type: "str",
+                    length: num
+                };
+                u.hexArray = this.hexArray.slice(start, start + num)
+                u.endIndex = start + num;
+                this.readIndex += num;
+                return u;
+            },
+            //获取u1，u2，u4，u8字段
             getFields(type, typeName, value) {
                 let start = this.readIndex;
                 let array = this.hexArray;
@@ -150,7 +272,7 @@
                         break
                 }
                 if (!value) {
-                    u["value"] = eval("0x"+u.hexArray.join("")).toString(10)
+                    u["value"] = Number(eval("0x" + u.hexArray.join("")).toString(10));
                 }
                 return u;
             },
@@ -307,6 +429,7 @@
 
                     .bottomDiv {
                         font-family: "Comic Sans MS";
+                        color: #0F4DA8;
                         height: 30px;
                         font-size: 16px;
                         font-weight: bolder;

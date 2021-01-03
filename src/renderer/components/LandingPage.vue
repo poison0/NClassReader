@@ -1,24 +1,14 @@
 <template>
-    <!--    <div id="wrapper">-->
-    <!--        <a-button type="primary" @click="upload()" style="margin-right: 20px">-->
-    <!--            上传-->
-    <!--        </a-button>-->
-    <!--        <div style="min-width: 100px"></div>-->
-    <!--      -->
-    <!--    </div>-->
     <div class="page">
         <div class="header">
             <div class="title">ClassReader</div>
         </div>
+        <wired-divider elevation="2" ></wired-divider>
         <div class="content">
             <div class="-left-content">
                 <div class="bottomNav">
-                    <div class="bottomDiv container">
-                        <div class="box" @click="upload()">
-                            <div class="img">
-                                上传
-                            </div>
-                        </div>
+                    <div class="bottomDiv">
+                        <wired-button class="wired-button" elevation="3" v-on:click="upload()">upload</wired-button>
                     </div>
                 </div>
                 <div class="bookArea">
@@ -26,7 +16,6 @@
             </div>
             <div class="-right-content">
                 <div class="-right-bar">
-                    <!--                    <div class="-right-bar-label">class二进制</div>-->
                 </div>
                 <div class="-right-content-book" :style="'height:'+(pageHeight-90)+'px'">
                     <div class="row-line">
@@ -43,7 +32,8 @@
 <script>
     import SystemInformation from './LandingPage/SystemInformation'
     import {getBinaryInfo} from "./util/operFile";
-
+    import "wired-button";
+    import "wired-divider";
     const {dialog} = require('electron').remote;
     const remote = require('electron').remote;
 
@@ -60,6 +50,7 @@
                     minor_version: {},//次版本号
                     major_version: {},//主版本号
                     constant_pool_count: {},//常量池个数
+                    constant_pool: [],//常量池
                 },
                 readIndex: 0,//解析时读取的指针
 
@@ -111,7 +102,7 @@
             },
             //读取次版本号
             getMinorVersion() {
-                this.classFile.minor_version = this.getFields(2, "次版本号")
+                this.classFile.minor_version = this.getFields(2, "副版本号")
             },
             //读取主版本号
             getMajorVersion() {
@@ -119,9 +110,13 @@
             },
             //读取常量池个数
             getConstantPoolCount() {
-                this.classFile.constant_pool_count = this.getFields(2, "常量池个数")
+                this.classFile.constant_pool_count = this.getFields(2, "常量池计数器")
             },
-            getFields(type, typeName) {
+            //读取常量池
+            getConstantPool() {
+                this.classFile.constant_pool = this.getFields(2, "常量池")
+            },
+            getFields(type, typeName, value) {
                 let start = this.readIndex;
                 let array = this.hexArray;
                 let u = {
@@ -130,7 +125,7 @@
                     hexArray: [],
                     typeName: typeName,
                     type: "u1",
-                    length: 1,
+                    length: 1
                 };
                 switch (type) {
                     case 1:
@@ -154,7 +149,42 @@
                         this.readIndex += 8;
                         break
                 }
+                if (!value) {
+                    u["value"] = eval("0x"+u.hexArray.join("")).toString(10)
+                }
                 return u;
+            },
+            //ASCII码转16进制
+            strToHexCharCode(str) {
+                if (str === "") {
+                    return "";
+                } else {
+                    var hexCharCode = [];
+                    hexCharCode.push("0x");
+                    for (var i = 0; i < str.length; i++) {
+                        hexCharCode.push((str.charCodeAt(i)).toString(16));
+                    }
+                    return hexCharCode.join("");
+                }
+            },
+
+            //十六进制转ASCII码
+            hexCharCodeToStr(hexCharCodeStr) {
+                var trimedStr = hexCharCodeStr.trim();
+                var rawStr = trimedStr.substr(0, 2).toLowerCase() === "0x" ? trimedStr.substr(2) : trimedStr;
+                var len = rawStr.length;
+                if (len % 2 !== 0
+                ) {
+                    alert("存在非法字符!");
+                    return "";
+                }
+                var curCharCode;
+                var resultStr = [];
+                for (var i = 0; i < len; i = i + 2) {
+                    curCharCode = parseInt(rawStr.substr(i, 2), 16);
+                    resultStr.push(String.fromCharCode(curCharCode));
+                }
+                return resultStr.join("");
             }
         }
     }
@@ -164,65 +194,66 @@
     .page {
         width: 100%;
         height: 100%;
-        background-color: #EFEFEF;
+        /*background-color: #EFEFEF;*/
         position: relative;
         overflow: hidden;
-
         .header {
             top: 0;
-            position: absolute;
+            /*position: absolute;*/
             display: flex;
             flex-direction: row;
             justify-items: center;
             width: 100%;
-            height: 48px;
+            height: 40px;
             background-color: #ffffff;
+            margin-top: 10px;
             /*background-color: #FFA400;*/
-            box-shadow: 0 0 4px #999999;
-            z-index: 111;
+            /*box-shadow: 0 0 4px #999999;*/
+            /*z-index: 111;*/
 
             .title {
                 color: #0F4DA8;
                 /*color: #437DD4;*/
                 /*color: #6A94D4;*/
                 /*color: #FFA110;*/
-                font-family: Calibri, "Times New Roman", serif;
+                /*font-family: Calibri, "Times New Roman", serif;*/
+                font-family: "Gloria Hallelujah", sans-serif;
                 font-size: 20px;
                 font-weight: bolder;
                 margin-left: 20px;
                 width: 100px;
-                height: 48px;
+                height: 40px;
                 line-height: 48px;
             }
         }
 
         .content {
             /*position:absolute;*/
-            font-family: '华文细黑', 'Courier New', Courier, monospace;
+            /*font-family: '华文细黑', 'Courier New', Courier, monospace;*/
             /*display: flex;*/
             /*flex-direction: row;*/
             /*height: 660px;*/
             height: 100%;
             position: relative;
-            margin-top: 48px;
+            /*margin-top: 48px;*/
 
             .-left-content {
                 float: left;
                 /*width: 20%;*/
                 width: 200px;
                 height: 100%;
-                border-right: 1px solid #E4E4E4;
+                /*border-right: 1px solid #E4E4E4;*/
                 /*box-shadow: 0 0 4px #999999;*/
                 z-index: 101;
 
                 .bookArea {
                     .titleBar {
-                        color: #999999;
+                        /*color: #999999;*/
                         font-size: 13px;
                         height: 40px;
                         line-height: 40px;
                         padding-left: 20px;
-                        border-bottom: 1px solid #E4E4E4;
+                        /*border-bottom: 1px solid #E4E4E4;*/
                     }
 
                     .bookItem {
@@ -275,9 +306,10 @@
                     align-items: center;
 
                     .bottomDiv {
-                        font-family: Calibri 微软雅黑, serif;
+                        font-family: "Comic Sans MS";
+                        height: 30px;
                         font-size: 16px;
-                        font-weight: bold;
+                        font-weight: bolder;
                         width: 90%;
                     }
 
@@ -292,10 +324,10 @@
                 display: flex;
                 overflow: auto;
                 flex-direction: column;
-                background-color: #E4E4E4;
+                /*background-color: #E4E4E4;*/
                 /*position: relative;*/
                 .row-line {
-                    font-family: Humanist;
+                    /*font-family: Humanist;*/
                     display: flex;
                     flex-direction: row;
                     flex-wrap: wrap;
@@ -336,10 +368,10 @@
                     flex-direction: row;
                     justify-content: space-between;
                     height: 40px;
-                    background-color: #EFEFEF;
+                    /*background-color: #EFEFEF;*/
                     /*background-color: #FFA400;*/
-                    border-bottom: 1px solid #E4E4E4;
-                    box-shadow: 0 0 2px #999999;
+                    /*border-bottom: 1px solid #E4E4E4;*/
+                    /*box-shadow: 0 0 2px #999999;*/
                     position: relative;
                     z-index: 99;
 
@@ -396,7 +428,7 @@
                             margin-top: 20px;
                             margin-bottom: 20px;
                             color: #000000;
-                            font-family: '苹方';
+                            /*font-family: '苹方';*/
                             /*font-weight: bold;*/
                             font-size: 14px;
                             min-height: 25px;

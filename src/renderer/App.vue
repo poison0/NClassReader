@@ -12,6 +12,7 @@
 
 <style type="text/css" lang="scss">
   html, body{
+    font-family: "Gloria Hallelujah", sans-serif;
     width: 100%;
     height: 100%;
   }

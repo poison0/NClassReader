@@ -15,6 +15,7 @@ import 'ant-design-vue/lib/spin/style/css';
 import 'ant-design-vue/lib/modal/style/css';
 import 'ant-design-vue/lib/date-picker/style/css';
 import 'ant-design-vue/lib/tag/style/css';
+import './assets/styles/font.css'
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios

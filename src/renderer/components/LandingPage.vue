@@ -51,6 +51,10 @@
                     major_version: {},//主版本号
                     constant_pool_count: {},//常量池个数
                     constant_pool: [],//常量池
+                    access_flags: {},//类访问标志
+                    this_class: {},//类索引
+                    super_class: {},//父类索引
+                    interfaces_count: {},//接口计数器
                 },
                 readIndex: 0,//解析时读取的指针
 
@@ -95,6 +99,10 @@
                 this.getMajorVersion();
                 this.getConstantPoolCount();
                 this.getConstantPool();
+                this.getAccessFlags();
+                this.getThisClass();
+                this.getSuperClass();
+                this.getInterfacesCount();
                 console.log(this.classFile)
             },
             //读取魔数
@@ -117,7 +125,62 @@
             getConstantPool() {
                 this.classFile.constant_pool = this.getConstantPoolAttr(this.classFile.constant_pool_count.value)
             },
-            //获取一个常量池的属性
+            //读取类访问标志
+            getAccessFlags() {
+                this.classFile.access_flags = this.getFields(2,"类访问标志")
+                let flags = [0x0001, 0x0010, 0x0020, 0x0200, 0x0400, 0x1000, 0x2000, 0x4000];
+                //添加标志类型
+                this.classFile.access_flags["sign"] = []
+                for (const key in flags) {
+                    let arg = flags[key]
+                    //标志的值如果与class文件中值的与运算还等于本身的话，说明包含此标志，一个类可以有多个标志
+                    if ((arg & parseInt(this.classFile.access_flags.hexArray.join(""), 16)) === arg) {
+                        switch (arg){
+                            case 0x0001:
+                                this.classFile.access_flags["sign"].push("ACC_PUBLIC");
+                                break;
+                            case 0x0010:
+                                this.classFile.access_flags["sign"].push("ACC_FINAL");
+                                break;
+                            case 0x0020:
+                                this.classFile.access_flags["sign"].push("ACC_SUPER");
+                                break;
+                            case 0x0200:
+                                this.classFile.access_flags["sign"].push("ACC_INTERFACE");
+                                break;
+                            case 0x0400:
+                                this.classFile.access_flags["sign"].push("ACC_ABSTRACT");
+                                break;
+                            case 0x1000:
+                                this.classFile.access_flags["sign"].push("ACC_SYNTHETIC");
+                                break;
+                            case 0x2000:
+                                this.classFile.access_flags["sign"].push("ACC_ANNOTATION");
+                                break;
+                            case 0x4000:
+                                this.classFile.access_flags["sign"].push("ACC_ENUM");
+                                break;
+                        }
+                    }
+                }
+            },
+            //读取类索引
+            getThisClass() {
+                this.classFile.this_class = this.getFields(2, "类索引")
+                this.classFile.this_class["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[this.classFile.constant_pool[this.classFile.this_class.value - 1].name_index.value - 1].bytes.hexArray.join(""));
+            },
+            //读取父类索引
+            getSuperClass() {
+                this.classFile.super_class = this.getFields(2, "父类索引")
+                if(this.classFile.super_class.value !== 0){
+                    this.classFile.super_class["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[this.classFile.constant_pool[this.classFile.super_class.value - 1].name_index.value - 1].bytes.hexArray.join(""));
+                }
+            },
+            //读取接口计数器
+            getInterfacesCount() {
+                this.classFile.interfaces_count = this.getFields(2, "接口计数器")
+            },
+            //获取常量池的属性
             //num : 常量池个数
             //CONSTANT_Utf8_info 1 UTF-8编码的字符串
             //CONSTANT_Integer_info 3 整型字面量
@@ -272,6 +335,7 @@
                         break
                 }
                 if (!value) {
+                    //转成10进制值
                     u["value"] = Number(eval("0x" + u.hexArray.join("")).toString(10));
                 }
                 return u;

@@ -55,6 +55,9 @@
                     this_class: {},//类索引
                     super_class: {},//父类索引
                     interfaces_count: {},//接口计数器
+                    interfaces:[],//接口表
+                    fields_count:{},//字段计数器
+                    fields:[],//字段表
                 },
                 readIndex: 0,//解析时读取的指针
 
@@ -103,23 +106,25 @@
                 this.getThisClass();
                 this.getSuperClass();
                 this.getInterfacesCount();
+                this.getInterfaces();
+                this.getFieldsCount();
                 console.log(this.classFile)
             },
             //读取魔数
             getMagic() {
-                this.classFile.magic = this.getFields(4, "魔数")
+                this.classFile.magic = this.getUFields(4, "魔数")
             },
             //读取次版本号
             getMinorVersion() {
-                this.classFile.minor_version = this.getFields(2, "副版本号")
+                this.classFile.minor_version = this.getUFields(2, "副版本号")
             },
             //读取主版本号
             getMajorVersion() {
-                this.classFile.major_version = this.getFields(2, "主版本号")
+                this.classFile.major_version = this.getUFields(2, "主版本号")
             },
             //读取常量池个数
             getConstantPoolCount() {
-                this.classFile.constant_pool_count = this.getFields(2, "常量池计数器")
+                this.classFile.constant_pool_count = this.getUFields(2, "常量池计数器")
             },
             //读取常量池
             getConstantPool() {
@@ -127,7 +132,7 @@
             },
             //读取类访问标志
             getAccessFlags() {
-                this.classFile.access_flags = this.getFields(2,"类访问标志")
+                this.classFile.access_flags = this.getUFields(2,"类访问标志")
                 let flags = [0x0001, 0x0010, 0x0020, 0x0200, 0x0400, 0x1000, 0x2000, 0x4000];
                 //添加标志类型
                 this.classFile.access_flags["sign"] = []
@@ -166,111 +171,134 @@
             },
             //读取类索引
             getThisClass() {
-                this.classFile.this_class = this.getFields(2, "类索引")
-                this.classFile.this_class["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[this.classFile.constant_pool[this.classFile.this_class.value - 1].name_index.value - 1].bytes.hexArray.join(""));
+                this.classFile.this_class = this.getUFields(2, "类索引")
+                this.classFile.this_class["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.this_class.value));
             },
             //读取父类索引
             getSuperClass() {
-                this.classFile.super_class = this.getFields(2, "父类索引")
+                this.classFile.super_class = this.getUFields(2, "父类索引")
                 if(this.classFile.super_class.value !== 0){
-                    this.classFile.super_class["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[this.classFile.constant_pool[this.classFile.super_class.value - 1].name_index.value - 1].bytes.hexArray.join(""));
+                    this.classFile.super_class["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.super_class.value));
                 }
             },
             //读取接口计数器
             getInterfacesCount() {
-                this.classFile.interfaces_count = this.getFields(2, "接口计数器")
+                this.classFile.interfaces_count = this.getUFields(2, "接口计数器")
+            },
+            //读取接口表
+            getInterfaces() {
+                if (this.classFile.interfaces_count.value > 0) {
+                    this.classFile.interfaces = this.getInterfacesAttr(this.classFile.interfaces_count.value);
+                }
+            },
+            //读取字段计数器
+            getFieldsCount() {
+                this.classFile.fields_count = this.getUFields(2, "字段计数器")
+            },
+            //读取字段表
+            getFields() {
+                this.classFile.fields = this.getUFields(2, "字段表")
+            },
+            //读取字段表的属性
+            //num : 字段表个数
+            getFieldsAttr(num){
+                let interfaceAttr = [];
+                for (let i = 0; i < num; i++) {
+                    let addr = this.getUFields(2, "接口表");
+                    addr["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(addr.value));
+                    interfaceAttr.push(addr)
+                }
+                return interfaceAttr;
+            },
+
+            //读取接口表的属性
+            //num : 接口表个数
+            getInterfacesAttr(num){
+                let interfaceAttr = [];
+                for (let i = 0; i < num; i++) {
+                    let addr = this.getUFields(2, "接口表");
+                    addr["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(addr.value));
+                    interfaceAttr.push(addr)
+                }
+                return interfaceAttr;
             },
             //获取常量池的属性
             //num : 常量池个数
-            //CONSTANT_Utf8_info 1 UTF-8编码的字符串
-            //CONSTANT_Integer_info 3 整型字面量
-            //CONSTANT_Float_info 4 浮点型字面量
-            //CONSTANT_Long_info 5 长整型字面量
-            //CONSTANT_Double_info 6 双精度浮点型字面量
-            //CONSTANT_Class_info 7 类或接口的符号引用
-            //CONSTANT_String_info 8 字符串类型字面量
-            //CONSTANT_Fieldref_info 9 字段的符号引用
-            //CONSTANT_Methodref_info 10 类中方法的符号引用
-            //CONSTANT_InterfaceMethodref_info 11 接口中方法的符号引用
-            //CONSTANT_NameAndType_info 12 字段或方法的部分符号引用
-            //CONSTANT_MethodHandle_info 15 表示方法句柄
-            //CONSTANT_MethodType_info 16 表示方法类型
-            //CONSTANT_InvokeDynamic_info 18 表示一个动态方法调用点
             getConstantPoolAttr(num){
                 let constantPool = [];
                 for (let i = 1; i <= num-1; i++) {
                     let attr = {};
                     //获取tag值
-                    let tag = this.getFields(1,"值")
+                    let tag = this.getUFields(1,"值")
                     attr["tag"] = tag;
                     switch (tag.value) {
                         case 1:
                             attr["type"] = "CONSTANT_utf8"
-                            let length = this.getFields(2,"长度")
+                            let length = this.getUFields(2,"长度")
                             attr["length"] = length;
                             //获取内容
                             attr["bytes"] = this.getStr(length.value,"字符串")
                             break;
                         case 3:
                             attr["type"] = "CONSTANT_Integer"
-                            attr["bytes"] = this.getFields(4,"整型")
+                            attr["bytes"] = this.getUFields(4,"整型")
                             break;
                         case 4:
                             attr["type"] = "CONSTANT_Float"
-                            attr["bytes"] = this.getFields(4,"浮点型")
+                            attr["bytes"] = this.getUFields(4,"浮点型")
                             break;
                         case 5:
                             attr["type"] = "CONSTANT_Long"
-                            attr["high_bytes"] = this.getFields(4,"长整型")
-                            attr["low_bytes"] = this.getFields(4,"长整型")
+                            attr["high_bytes"] = this.getUFields(4,"长整型")
+                            attr["low_bytes"] = this.getUFields(4,"长整型")
                             break;
                         case 6:
                             attr["type"] = "CONSTANT_Double"
-                            attr["high_bytes"] = this.getFields(4,"双精度浮点型")
-                            attr["low_bytes"] = this.getFields(4,"双精度浮点型")
+                            attr["high_bytes"] = this.getUFields(4,"双精度浮点型")
+                            attr["low_bytes"] = this.getUFields(4,"双精度浮点型")
                             break;
                         case 7:
                             attr["type"] = "CONSTANT_Class"
                             //对常量池的一个有效索引
-                            attr["name_index"] = this.getFields(2,"类或接口的符号引用")
+                            attr["name_index"] = this.getUFields(2,"类或接口的符号引用")
                             break;
                         case 8:
                             attr["type"] = "CONSTANT_String"
-                            attr["string_index"] = this.getFields(2,"字符串类型字面量")
+                            attr["string_index"] = this.getUFields(2,"字符串类型字面量")
                             break;
                         case 9:
                             attr["type"] = "CONSTANT_Fieldref"
-                            attr["class_index"] = this.getFields(2,"字段的符号引用")
-                            attr["name_and_type_index"] = this.getFields(2,"字段的名称和描述符")
+                            attr["class_index"] = this.getUFields(2,"字段的符号引用")
+                            attr["name_and_type_index"] = this.getUFields(2,"字段的名称和描述符")
                             break;
                         case 10:
                             attr["type"] = "CONSTANT_Methodref"
-                            attr["class_index"] = this.getFields(2,"类中方法的符号引用")
-                            attr["name_and_type_index"] = this.getFields(2,"类中方法的名称和描述符")
+                            attr["class_index"] = this.getUFields(2,"类中方法的符号引用")
+                            attr["name_and_type_index"] = this.getUFields(2,"类中方法的名称和描述符")
                             break;
                         case 11:
                             attr["type"] = "CONSTANT_InterfaceMethodref"
-                            attr["class_index"] = this.getFields(2,"接口中方法的符号引用")
-                            attr["name_and_type_index"] = this.getFields(2,"接口中方法的名称和描述符")
+                            attr["class_index"] = this.getUFields(2,"接口中方法的符号引用")
+                            attr["name_and_type_index"] = this.getUFields(2,"接口中方法的名称和描述符")
                             break;
                         case 12:
                             attr["type"] = "CONSTANT_NameAndType"
-                            attr["name_index"] = this.getFields(2,"方法或字段的部分符号引用")
-                            attr["descriptor_index"] = this.getFields(2,"有效的字段描述符或者方法描述符")
+                            attr["name_index"] = this.getUFields(2,"方法或字段的部分符号引用")
+                            attr["descriptor_index"] = this.getUFields(2,"有效的字段描述符或者方法描述符")
                             break;
                         case 15:
                             attr["type"] = "CONSTANT_MethodHandle"
-                            attr["reference_kind"] = this.getFields(1,"句柄类型")
-                            attr["reference_index"] = this.getFields(2,"句柄名称")
+                            attr["reference_kind"] = this.getUFields(1,"句柄类型")
+                            attr["reference_index"] = this.getUFields(2,"句柄名称")
                             break;
                         case 16:
                             attr["type"] = "CONSTANT_MethodType"
-                            attr["descriptor_index"] = this.getFields(1,"方法的描述符")
+                            attr["descriptor_index"] = this.getUFields(1,"方法的描述符")
                             break;
                         case 18:
                             attr["type"] = "CONSTANT_InvokeDynamic"
-                            attr["bootstrap_method_attr_index"] = this.getFields(2,"引导方法表的索引")
-                            attr["name_and_type_index"] = this.getFields(2,"方法名和方法描述符")
+                            attr["bootstrap_method_attr_index"] = this.getUFields(2,"引导方法表的索引")
+                            attr["name_and_type_index"] = this.getUFields(2,"方法名和方法描述符")
                             break;
                     }
                     constantPool.push(attr);
@@ -283,6 +311,11 @@
                     }
                 }
                 return constantPool;
+            },
+            //获取常量池中对应的类名
+            //index : 索引
+            getConstantClassStr(index){
+                return this.classFile.constant_pool[this.classFile.constant_pool[index - 1].name_index.value - 1].bytes.hexArray.join("")
             },
             //获取字符串
             getStr(num,typeName){
@@ -301,7 +334,7 @@
                 return u;
             },
             //获取u1，u2，u4，u8字段
-            getFields(type, typeName, value) {
+            getUFields(type, typeName, value) {
                 let start = this.readIndex;
                 let array = this.hexArray;
                 let u = {
@@ -316,21 +349,25 @@
                     case 1:
                         u.hexArray = array.slice(start, start + 1)
                         u.endIndex = start + 1;
+                        u.type = "u1";
                         this.readIndex += 1;
                         break
                     case 2:
                         u.hexArray = array.slice(start, start + 2)
                         u.endIndex = start + 2;
+                        u.type = "u2";
                         this.readIndex += 2;
                         break
                     case 4:
                         u.hexArray = array.slice(start, start + 4)
                         u.endIndex = start + 4;
+                        u.type = "u4";
                         this.readIndex += 4;
                         break
                     case 8:
                         u.hexArray = array.slice(start, start + 8)
                         u.endIndex = start + 8;
+                        u.type = "u8";
                         this.readIndex += 8;
                         break
                 }
@@ -345,7 +382,7 @@
                 if (str === "") {
                     return "";
                 } else {
-                    var hexCharCode = [];
+                    let hexCharCode = [];
                     hexCharCode.push("0x");
                     for (var i = 0; i < str.length; i++) {
                         hexCharCode.push((str.charCodeAt(i)).toString(16));
@@ -356,16 +393,16 @@
 
             //十六进制转ASCII码
             hexCharCodeToStr(hexCharCodeStr) {
-                var trimedStr = hexCharCodeStr.trim();
-                var rawStr = trimedStr.substr(0, 2).toLowerCase() === "0x" ? trimedStr.substr(2) : trimedStr;
-                var len = rawStr.length;
+                let trimedStr = hexCharCodeStr.trim();
+                let rawStr = trimedStr.substr(0, 2).toLowerCase() === "0x" ? trimedStr.substr(2) : trimedStr;
+                let len = rawStr.length;
                 if (len % 2 !== 0
                 ) {
                     alert("存在非法字符!");
                     return "";
                 }
-                var curCharCode;
-                var resultStr = [];
+                let curCharCode;
+                let resultStr = [];
                 for (var i = 0; i < len; i = i + 2) {
                     curCharCode = parseInt(rawStr.substr(i, 2), 16);
                     resultStr.push(String.fromCharCode(curCharCode));

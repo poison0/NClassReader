@@ -108,6 +108,7 @@
                 this.getInterfacesCount();
                 this.getInterfaces();
                 this.getFieldsCount();
+                this.getFields();
                 console.log(this.classFile)
             },
             //读取魔数
@@ -197,7 +198,56 @@
             },
             //读取字段表
             getFields() {
-                this.classFile.fields = this.getUFields(2, "字段表")
+                if (this.classFile.fields_count.value > 0) {
+                    for (let i = 0; i < this.classFile.fields_count.value; i++) {
+                        this.classFile.fields.push(this.getField());
+                    }
+                }
+            },
+            //读取一个字段
+            getField() {
+                let field = {
+                    access_flags:{},
+                    name_index:{},
+                    descriptor_index:{},
+                    attributes_count:{},
+                    attribute_info: []
+                }
+                field.access_flags  = this.getUFields(2, "标志");
+                field.name_index  = this.getUFields(2, "字段名");
+                field.descriptor_index  = this.getUFields(2, "字段描述符");
+                field.attributes_count  = this.getUFields(2, "附加属性数量");
+                for (let i = 0; i < field.attributes_count.value; i++) {
+                    field.attribute_info.push(this.getAttribute());
+                }
+                return field;
+            },
+            //获取一个属性
+            getAttribute(){
+                let attr = {
+                    attribute_name_index: {},
+                    attribute_length: {}
+                };
+                attr.attribute_name_index = this.getUFields(2, "属性名");
+                attr["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[attr.attribute_name_index.value - 1].bytes.hexArray.join(""));
+                attr.attribute_length = this.getUFields(4, "当前属性长度");
+                let lastAttr = {}
+                switch (attr.link_value) {
+                    case "ConstantValue":
+                        lastAttr = this.getAttrConstantValue()
+                }
+                for(let i in lastAttr){
+                    attr[i]=lastAttr[i];
+                }
+                return attr;
+            },
+            //获取ConstantValue属性
+            getAttrConstantValue(){
+                let attr = {
+                    constantValue_index: {},
+                };
+                attr.constantValue_index = this.getUFields(2, "项类型");
+                return attr;
             },
             //读取字段表的属性
             //num : 字段表个数

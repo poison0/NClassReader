@@ -232,12 +232,52 @@
                 attr["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[attr.attribute_name_index.value - 1].bytes.hexArray.join(""));
                 attr.attribute_length = this.getUFields(4, "当前属性长度");
                 let lastAttr = {}
+                //属性表
                 switch (attr.link_value) {
                     case "ConstantValue":
-                        lastAttr = this.getAttrConstantValue()
+                        lastAttr = this.getAttrConstantValue();
+                        break;
+                    case "Exceptions":
+                        lastAttr = this.getAttrExceptions();
+                        break;
+                    case "LineNumberTable":
+                        lastAttr = this.getAttrLineNumberTable();
+                        break;
                 }
                 for(let i in lastAttr){
                     attr[i]=lastAttr[i];
+                }
+                return attr;
+            },
+            //获取LineNumberTable属性
+            getAttrLineNumberTable(){
+                let attr = {
+                    line_number_table_length: {},
+                    line_number_table:[]
+                };
+                attr.line_number_table_length = this.getUFields(2, "成员数量");
+                for (let i = 0; i < attr.line_number_table_length.value; i++) {
+                    let start_pc = this.getUFields(2, "字节码行号");
+                    let line_number = this.getUFields(2, "java源码行号");
+                    let line_number_info = {
+                        start_pc:start_pc,
+                        line_number:line_number
+                    }
+                    attr.line_number_table.push(line_number_info)
+                }
+                return attr;
+            },
+            //获取Exceptions属性
+            getAttrExceptions(){
+                let attr = {
+                    number_of_exceptions: {},
+                    exception_index_table:[]
+                };
+                attr.number_of_exceptions = this.getUFields(2, "成员数量");
+                for (let i = 0; i < attr.number_of_exceptions.value; i++) {
+                     let exception = this.getUFields(2, "异常类类型");
+                     exception["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(exception.value));
+                     attr.exception_index_table.push(exception)
                 }
                 return attr;
             },

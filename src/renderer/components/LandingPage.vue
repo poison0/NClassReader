@@ -58,6 +58,10 @@
                     interfaces:[],//接口表
                     fields_count:{},//字段计数器
                     fields:[],//字段表
+                    methods_count:{},//方法计数器
+                    methods:[],//方法表
+                    attribute_count: {},//属性表计数器
+                    attribute_info:[]//属性表
                 },
                 readIndex: 0,//解析时读取的指针
 
@@ -109,6 +113,10 @@
                 this.getInterfaces();
                 this.getFieldsCount();
                 this.getFields();
+                this.getMethodsCount();
+                this.getMethodInfo();
+                this.getAttributeCount();
+                this.getAttributes();
                 console.log(this.classFile)
             },
             //读取魔数
@@ -203,6 +211,48 @@
                         this.classFile.fields.push(this.getField());
                     }
                 }
+            },
+            //读取方法表计数器
+            getMethodsCount() {
+                this.classFile.methods_count = this.getUFields(2, "方法计数器")
+            },
+            //读取方法表
+            getMethodInfo() {
+                if (this.classFile.methods_count.value > 0) {
+                    for (let i = 0; i < this.classFile.methods_count.value; i++) {
+                        this.classFile.methods.push(this.getMethod());
+                    }
+                }
+            },
+            //读取属性表计数器
+            getAttributeCount() {
+                this.classFile.attribute_count = this.getUFields(2, "属性表计数器")
+            },
+            //读取属性表
+            getAttributes() {
+                if (this.classFile.attribute_count.value > 0) {
+                    for (let i = 0; i < this.classFile.attribute_count.value; i++) {
+                        this.classFile.attribute_info.push(this.getAttribute());
+                    }
+                }
+            },
+            //读取一个方法
+            getMethod() {
+                let field = {
+                    access_flags:{},
+                    name_index:{},
+                    descriptor_index:{},
+                    attributes_count:{},
+                    attribute_info: []
+                }
+                field.access_flags  = this.getUFields(2, "标志");
+                field.name_index  = this.getUFields(2, "字段名");
+                field.descriptor_index  = this.getUFields(2, "字段描述符");
+                field.attributes_count  = this.getUFields(2, "附加属性数量");
+                for (let i = 0; i < field.attributes_count.value; i++) {
+                    field.attribute_info.push(this.getAttribute());
+                }
+                return field;
             },
             //读取一个字段
             getField() {

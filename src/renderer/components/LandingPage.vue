@@ -339,18 +339,6 @@
                 attr.constantValue_index = this.getUFields(2, "项类型");
                 return attr;
             },
-            //读取字段表的属性
-            //num : 字段表个数
-            getFieldsAttr(num){
-                let interfaceAttr = [];
-                for (let i = 0; i < num; i++) {
-                    let addr = this.getUFields(2, "接口表");
-                    addr["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(addr.value));
-                    interfaceAttr.push(addr)
-                }
-                return interfaceAttr;
-            },
-
             //读取接口表的属性
             //num : 接口表个数
             getInterfacesAttr(num){

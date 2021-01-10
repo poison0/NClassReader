@@ -34,6 +34,7 @@
     import {getBinaryInfo} from "./util/operFile";
     import "wired-button";
     import "wired-divider";
+
     const {dialog} = require('electron').remote;
     const remote = require('electron').remote;
 
@@ -245,6 +246,7 @@
                     attributes_count:{},
                     attribute_info: []
                 }
+                //TODO 方法访问标志
                 field.access_flags  = this.getUFields(2, "标志");
                 field.name_index  = this.getUFields(2, "字段名");
                 field.descriptor_index  = this.getUFields(2, "字段描述符");
@@ -263,6 +265,7 @@
                     attributes_count:{},
                     attribute_info: []
                 }
+                //TODO 字段访问标志
                 field.access_flags  = this.getUFields(2, "标志");
                 field.name_index  = this.getUFields(2, "字段名");
                 field.descriptor_index  = this.getUFields(2, "字段描述符");
@@ -293,9 +296,156 @@
                     case "LineNumberTable":
                         lastAttr = this.getAttrLineNumberTable();
                         break;
+                    case "InnerClasses":
+                        lastAttr = this.getAttrInnerClasses();
+                        break;
+                    case "Deprecated"://只有有或者没有的区别
+                        break;
+                    case "Synthetic"://只有有或者没有的区别
+                        break;
+                    case "EnclosingMethod":
+                        lastAttr = this.getAttrEnclosingMethod();
+                        break;
+                    case "Signature":
+                        lastAttr = this.getAttrSignature();
+                        break;
+                    case "SourceFile":
+                        lastAttr = this.getAttrSourceFile();
+                        break;
+                    case "LocalVariableTable":
+                        lastAttr = this.getAttrLocalVariableTable();
+                        break;
+                    case "LocalVariableTypeTable":
+                        lastAttr = this.getAttrLocalVariableTypeTable();
+                        break;
+                    case "RuntimeVisibleAnnotations":
+                        lastAttr = this.getAttrRuntimeVisibleAnnotations();
+                        break;
                 }
                 for(let i in lastAttr){
                     attr[i]=lastAttr[i];
+                }
+                return attr;
+            },
+            //获取RuntimeVisibleAnnotations属性
+            getAttrRuntimeVisibleAnnotations() {
+                let attr = {
+                    num_annotations:this.getUFields(2, "注解数量"),
+                    annotations:[]
+                };
+                for (let i = 0; i < attr.num_annotations.value; i++) {
+                    let annotation = {
+                        //TODO utf8索引
+                        type_index:this.getUFields(2, "索引"),
+                        num_element_value_pairs:this.getUFields(2, "注解键值对个数"),
+                        element_value_pairs:[]
+                    }
+                    for (let i = 0; i < annotation.num_element_value_pairs.value; i++) {
+                        let element = {
+                            element_name_index:this.getUFields(2, "索引"),
+                            //TODO 可变联合体
+                            element_value:{
+                                tag:this.getUFields(1, "值类型"),
+                                enum_const_value:{
+                                    type_name_index:this.getUFields(2, "值类型"),
+                                    const_name_index:this.getUFields(2, "值类型"),
+                                },
+                                class_info_index:this.getUFields(2, "值类型"),
+                                //TODO 需要判断
+                            }
+                        }
+                        annotation.element_value_pairs.push(element)
+                    }
+
+                    attr.annotations.push(annotation);
+                }
+                return attr;
+            },
+            //获取LocalVariableTypeTable属性
+            getAttrLocalVariableTypeTable() {
+                let attr = {
+                    local_variable_type_table_length:this.getUFields(2, "成员数量"),
+                    local_variable_type_table:[]
+                };
+                for (let i = 0; i < attr.local_variable_type_table_length.value; i++) {
+                    let table = {
+                        start_pc:this.getUFields(2, "索引"),
+                        length:this.getUFields(2, "索引"),
+                        //TODO utf8索引
+                        name_index:this.getUFields(2, "局部变量"),
+                        //TODO utf8索引
+                        signature_index:this.getUFields(2, "局部变量字段描述符"),
+                        index:this.getUFields(2, "局部变量表中的索引"),
+                    }
+                    attr.local_variable_type_table.push(table);
+                }
+                return attr;
+            },
+            //获取LocalVariableTable属性
+            getAttrLocalVariableTable() {
+                let attr = {
+                    local_variable_table_length:this.getUFields(2, "成员数量"),
+                    local_variable_table:[]
+                };
+                for (let i = 0; i < attr.local_variable_table_length.value; i++) {
+                    let table = {
+                        start_pc:this.getUFields(2, "索引"),
+                        length:this.getUFields(2, "索引"),
+                        //TODO utf8索引
+                        name_index:this.getUFields(2, "局部变量"),
+                        //TODO utf8索引
+                        descriptor_index:this.getUFields(2, "局部变量字段描述符"),
+                        index:this.getUFields(2, "局部变量表中的索引"),
+                    }
+                    attr.local_variable_table.push(table);
+                }
+                return attr;
+            },
+            //获取SourceFile属性
+            getAttrSourceFile() {
+                let attr = {
+                    //TODO utf8索引
+                    sourcefile_index:this.getUFields(2, "源文件名")
+                };
+                attr.sourcefile_index["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[attr.sourcefile_index.value - 1].bytes.hexArray.join(""));
+                return attr;
+            },
+            //获取Signature属性 泛型签名信息
+            getAttrSignature() {
+                return {
+                    //TODO utf8索引
+                    signature_index: this.getUFields(2, "签名"),
+                };
+            },
+            //获取EnclosingMethod属性 局部类或匿名类才有
+            getAttrEnclosingMethod() {
+                let attr = {
+                    class_index:this.getUFields(2, "内层类"),
+                    //TODO nameAndType结构
+                    method_index:this.getUFields(2, "对应的方法名和方法类型")
+                };
+                attr.class_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.class_index.value))
+                return attr;
+            },
+            //获取InnerClasses属性
+            getAttrInnerClasses() {
+                let attr = {
+                    number_of_classes: {},
+                    classes:[]
+                };
+
+                attr.number_of_classes = this.getUFields(2, "成员数量");
+                for (let i = 0; i < attr.number_of_classes.value; i++) {
+                    let clazz = {
+                        inner_class_info_index:this.getUFields(2, "内部类符号引用"),
+                        outer_class_info_index:this.getUFields(2, "宿主类符号引用"),
+                        inner_name_index:this.getUFields(2, "内部类名称"),
+                        //TODO 类访问标志
+                        inner_class_access_flags:this.getUFields(2, "内部类访问标志"),
+                    }
+                    clazz.inner_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.inner_class_info_index.value));
+                    clazz.outer_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.outer_class_info_index.value));
+                    attr.classes.push(clazz);
                 }
                 return attr;
             },
@@ -443,7 +593,12 @@
             //获取常量池中对应的类名
             //index : 索引
             getConstantClassStr(index){
-                return this.classFile.constant_pool[this.classFile.constant_pool[index - 1].name_index.value - 1].bytes.hexArray.join("")
+                //等于0说明是空的，常量池没有0项元素
+                if(index === 1){
+                    return ""
+                }else{
+                    return this.classFile.constant_pool[this.classFile.constant_pool[index - 1].name_index.value - 1].bytes.hexArray.join("")
+                }
             },
             //获取字符串
             getStr(num,typeName){

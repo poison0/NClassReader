@@ -334,32 +334,83 @@
                     annotations:[]
                 };
                 for (let i = 0; i < attr.num_annotations.value; i++) {
-                    let annotation = {
-                        //TODO utf8索引
-                        type_index:this.getUFields(2, "索引"),
-                        num_element_value_pairs:this.getUFields(2, "注解键值对个数"),
-                        element_value_pairs:[]
-                    }
-                    for (let i = 0; i < annotation.num_element_value_pairs.value; i++) {
-                        let element = {
-                            element_name_index:this.getUFields(2, "索引"),
-                            //TODO 可变联合体
-                            element_value:{
-                                tag:this.getUFields(1, "值类型"),
-                                enum_const_value:{
-                                    type_name_index:this.getUFields(2, "值类型"),
-                                    const_name_index:this.getUFields(2, "值类型"),
-                                },
-                                class_info_index:this.getUFields(2, "值类型"),
-                                //TODO 需要判断
-                            }
-                        }
-                        annotation.element_value_pairs.push(element)
-                    }
-
-                    attr.annotations.push(annotation);
+                    attr.annotations.push(this.getAnnotation());
                 }
                 return attr;
+            },
+            //获取annotation对象
+            getAnnotation() {
+                let annotation = {
+                    //TODO utf8索引
+                    type_index:this.getUFields(2, "索引"),
+                    num_element_value_pairs:this.getUFields(2, "注解键值对个数"),
+                    element_value_pairs:[]
+                }
+                for (let i = 0; i < annotation.num_element_value_pairs.value; i++) {
+                    let element = {
+                        element_name_index:this.getUFields(2, "索引"),
+                        element_value: this.getElementValue()
+                    }
+                    annotation.element_value_pairs.push(element)
+                }
+                return annotation;
+            },
+            //获取elementValue字段
+            getElementValue(){
+                let element_value = {
+                    tag:this.getUFields(1, "值类型"),
+                }
+                switch (String.fromCharCode(element_value.tag.value)) {
+                    case "B":
+                        element_value["const_value_index"] = this.getUFields(2, "byte类型");
+                        break;
+                    case "C":
+                        element_value["const_value_index"] = this.getUFields(2, "char类型");
+                        break;
+                    case "D":
+                        element_value["const_value_index"] = this.getUFields(2, "double类型");
+                        break;
+                    case "F":
+                        element_value["const_value_index"] = this.getUFields(2, "float类型");
+                        break;
+                    case "I":
+                        element_value["const_value_index"] = this.getUFields(2, "int类型");
+                        break;
+                    case "J":
+                        element_value["const_value_index"] = this.getUFields(2, "long类型");
+                        break;
+                    case "S":
+                        element_value["const_value_index"] = this.getUFields(2, "short类型");
+                        break;
+                    case "Z":
+                        element_value["const_value_index"] = this.getUFields(2, "boolean类型");
+                        break;
+                    case "s":
+                        element_value["const_value_index"] = this.getUFields(2, "String类型");
+                        break;
+                    case "e":
+                        element_value["enum_const_value"] = {
+                            type_name_index : this.getUFields(2, "枚举常量类型的二进制名称的内部形式"),
+                            const_name_index : this.getUFields(2, "简单名称"),
+                        }
+                        break;
+                    case "c":
+                        element_value["class_info_index"] = this.getUFields(2, "Class类型");
+                        break;
+                    case "@":
+                        element_value["annotation_value"] = this.getAnnotation();
+                        break;
+                    case "[":
+                        element_value["array_value"] = {
+                            num_values: this.getUFields(2, "数组个数"),
+                            values: []
+                        }
+                        for (let i = 0; i < element_value.array_value.num_values.value; i++) {
+                            element_value.array_value.values.push(this.getElementValue())
+                        }
+                        break;
+                }
+                return element_value;
             },
             //获取LocalVariableTypeTable属性
             getAttrLocalVariableTypeTable() {

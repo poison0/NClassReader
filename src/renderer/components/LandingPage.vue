@@ -11,6 +11,25 @@
                         <wired-button class="wired-button" elevation="3" v-on:click="upload()">upload</wired-button>
                     </div>
                 </div>
+                <div class="classFile">
+                    <div>classFile</div>
+                    <div class="classItem">magic</div>
+                    <div class="classItem">minor_version</div>
+                    <div class="classItem">major_version</div>
+                    <div class="classItem">constant_pool_count</div>
+                    <div class="classItem">constant_pool</div>
+                    <div class="classItem">access_flags</div>
+                    <div class="classItem">this_class</div>
+                    <div class="classItem">super_class</div>
+                    <div class="classItem">interfaces_count</div>
+                    <div class="classItem">interfaces</div>
+                    <div class="classItem">fields_count</div>
+                    <div class="classItem">fields</div>
+                    <div class="classItem">methods_count</div>
+                    <div class="classItem">methods</div>
+                    <div class="classItem">attribute_count</div>
+                    <div class="classItem">attribute_info</div>
+                </div>
                 <div class="bookArea">
                 </div>
             </div>
@@ -34,6 +53,7 @@
     import {getBinaryInfo} from "./util/operFile";
     import "wired-button";
     import "wired-divider";
+    import "wired-checkbox";
 
     const {dialog} = require('electron').remote;
     const remote = require('electron').remote;
@@ -65,7 +85,6 @@
                     attribute_info:[]//属性表
                 },
                 readIndex: 0,//解析时读取的指针
-
             }
         },
         mounted() {
@@ -118,6 +137,7 @@
                 this.getMethodInfo();
                 this.getAttributeCount();
                 this.getAttributes();
+                console.log(this.classFile)
             },
             //读取魔数
             getMagic() {
@@ -250,7 +270,6 @@
                 field.name_index  = this.getUFields(2, "字段名");
                 field.descriptor_index  = this.getUFields(2, "字段描述符");
                 field.attributes_count  = this.getUFields(2, "附加属性数量");
-                console.log(field)
                 for (let i = 0; i < field.attributes_count.value; i++) {
                     field.attribute_info.push(this.getAttribute());
                 }
@@ -918,7 +937,7 @@
                     height: 50px;
                     display: flex;
                     /*border-bottom: 1px solid #E4E4E4;*/
-                    flex-direction: row;
+                    flex-direction: column;
                     justify-content: center;
                     align-items: center;
 
@@ -930,7 +949,22 @@
                         font-weight: bolder;
                         width: 90%;
                     }
-
+                }
+                .classFile {
+                    display: flex;
+                    flex-direction: column;
+                    cursor: pointer;
+                    font-family: "Comic Sans MS";
+                    color: #0F4DA8;
+                    margin-left: 20px;
+                    margin-top: 20px;
+                    font-size: 16px;
+                    font-weight: bolder;
+                    width: 90%;
+                    .classItem{
+                        line-height: 25px;
+                        height: 25px;
+                    }
                 }
             }
 
@@ -967,14 +1001,14 @@
                         min-width: 40px;
                         border-radius: 3px;
                         background: #ffffff;
-                        box-shadow: inset 2px 2px 3px #cccccc,
-                        inset -2px -2px 3px #fafafa;
+                        /*<!--box-shadow: inset 2px 2px 3px #cccccc,-->*/
+                        /*<!--inset -2px -2px 3px #fafafa;-->*/
 
                         :hover {
                             border-radius: 3px;
-                            background: linear-gradient(145deg, #cccccc, #fafafa);
-                            box-shadow: 2px 2px 3px #cccccc,
-                            -2px -2px 3px #fafafa;
+                            /*<!--background: linear-gradient(145deg, #cccccc, #fafafa);-->*/
+                            /*<!--box-shadow: 2px 2px 3px #cccccc,-->*/
+                            /*<!-- -2px -2px 3px #fafafa;-->*/
                         }
                     }
 

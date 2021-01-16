@@ -118,7 +118,6 @@
                 this.getMethodInfo();
                 this.getAttributeCount();
                 this.getAttributes();
-                console.log(this.classFile)
             },
             //读取魔数
             getMagic() {
@@ -251,6 +250,7 @@
                 field.name_index  = this.getUFields(2, "字段名");
                 field.descriptor_index  = this.getUFields(2, "字段描述符");
                 field.attributes_count  = this.getUFields(2, "附加属性数量");
+                console.log(field)
                 for (let i = 0; i < field.attributes_count.value; i++) {
                     field.attribute_info.push(this.getAttribute());
                 }
@@ -290,6 +290,9 @@
                     case "ConstantValue":
                         lastAttr = this.getAttrConstantValue();
                         break;
+                    case "Code":
+                        lastAttr = this.getAttrCode();
+                        break;
                     case "Exceptions":
                         lastAttr = this.getAttrExceptions();
                         break;
@@ -321,9 +324,66 @@
                     case "RuntimeVisibleAnnotations":
                         lastAttr = this.getAttrRuntimeVisibleAnnotations();
                         break;
+                    case "RuntimeVisibleParameterAnnotations":
+                        lastAttr = this.getAttrRuntimeVisibleParameterAnnotations();
+                        break;
+                    default:
+                        //遇到不认识的属性，直接跳过
+                        this.readIndex += attr.attribute_length.value;
                 }
                 for(let i in lastAttr){
                     attr[i]=lastAttr[i];
+                }
+                return attr;
+            },
+            //获取Code属性
+            getAttrCode() {
+                let attr = {
+                    max_stack: this.getUFields(2, "方法执行的最大深度"),
+                    max_locals: this.getUFields(2, "局部变量个数"),
+                    code_length: this.getUFields(4, "code数组字节数"),
+                    code: [],//指令
+                    exception_table_length:{},
+                    exception_table:[],
+                    attributes_count: {},
+                    attributes:[]
+                };
+                for (let i = 0; i < attr.code_length.value; i++) {
+                    //TODO 指令
+                    attr.code.push(this.getUFields(1, "指令"))
+                }
+                attr.exception_table_length = this.getUFields(2, "exception_table个数");
+                for (let i = 0; i <attr.exception_table_length.value; i++) {
+                    let table = {
+                        start_pc : this.getUFields(2, "有效范围"),
+                        end_pc : this.getUFields(2, "有效范围"),
+                        handle_pc : this.getUFields(2, "异常处理起点"),
+                        //TODO class
+                        catch_type : this.getUFields(2, "异常类")
+                    }
+                    attr.exception_table.push(table)
+                }
+                attr.attributes_count = this.getUFields(2, "attributes个数");
+                for (let i = 0; i <attr.attributes_count.value; i++) {
+                    attr.exception_table.push(this.getAttribute())
+                }
+                return attr;
+            },
+            //获取RuntimeVisibleParameterAnnotations属性
+            getAttrRuntimeVisibleParameterAnnotations() {
+                let attr = {
+                    num_parameters:this.getUFields(2, "形参注解数量"),
+                    parameter_annotations:[]
+                };
+                for (let i = 0; i < attr.num_parameters.value; i++) {
+                    let parameter = {
+                        num_annotations: this.getUFields(2, "可见注解数量"),
+                        annotations:[]
+                    }
+                    for (let i = 0; i < attr.num_parameters.value; i++) {
+                        parameter.annotations.push(this.getAnnotation())
+                    }
+                    attr.parameter_annotations.push(parameter);
                 }
                 return attr;
             },
@@ -494,8 +554,8 @@
                         //TODO 类访问标志
                         inner_class_access_flags:this.getUFields(2, "内部类访问标志"),
                     }
-                    clazz.inner_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.inner_class_info_index.value));
-                    clazz.outer_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.outer_class_info_index.value));
+                    clazz.inner_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(clazz.inner_class_info_index.value));
+                    clazz.outer_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(clazz.outer_class_info_index.value));
                     attr.classes.push(clazz);
                 }
                 return attr;

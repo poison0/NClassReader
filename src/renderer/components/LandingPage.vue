@@ -2,8 +2,11 @@
     <div class="page">
         <div class="header">
             <div class="title">ClassReader</div>
+            <wired-card class="titleBu" @click="closeWindow()">x</wired-card>
+            <wired-card class="titleBu" @click="maxWindow()">□</wired-card>
+            <wired-card class="titleBu" @click="minWindow()">-</wired-card>
         </div>
-        <wired-divider elevation="2" ></wired-divider>
+        <wired-divider elevation="1" ></wired-divider>
         <div class="content">
             <div class="-left-content">
                 <div class="bottomNav">
@@ -12,23 +15,16 @@
                     </div>
                 </div>
                 <div class="classFile">
-                    <div>classFile</div>
-                    <div class="classItem">magic</div>
-                    <div class="classItem">minor_version</div>
-                    <div class="classItem">major_version</div>
-                    <div class="classItem">constant_pool_count</div>
-                    <div class="classItem">constant_pool</div>
-                    <div class="classItem">access_flags</div>
-                    <div class="classItem">this_class</div>
-                    <div class="classItem">super_class</div>
-                    <div class="classItem">interfaces_count</div>
-                    <div class="classItem">interfaces</div>
-                    <div class="classItem">fields_count</div>
-                    <div class="classItem">fields</div>
-                    <div class="classItem">methods_count</div>
-                    <div class="classItem">methods</div>
-                    <div class="classItem">attribute_count</div>
-                    <div class="classItem">attribute_info</div>
+                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">
+                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem" @click="chooseItem(val,i)">
+                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
+                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>
+                        </div>
+                        <div v-else class="classItem">
+                            <img src="./img/wjj1.jpg" height="20px" width="20px"><img/>
+                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="bookArea">
                 </div>
@@ -37,11 +33,27 @@
                 <div class="-right-bar">
                 </div>
                 <div class="-right-content-book" :style="'height:'+(pageHeight-90)+'px'">
-                    <div class="row-line">
-                        <div v-for="(hex,index) in hexArray" class="single">
-                            <div>{{hex.toUpperCase()}}</div>
+                    <wired-card v-if="ascArray.length !== 0" elevation="4" style="margin-right: 10px">
+                        <div class="left-line">
+                            <div v-for="count in 27" class="single">
+                                00000000
+                            </div>
                         </div>
-                    </div>
+                    </wired-card>
+                    <wired-card v-if="hexArray.length !== 0" elevation="4" style="margin-right: 10px">
+                        <div class="row-line">
+                            <div v-for="(hex,index) in hexArray" class="single">
+                                <div :class="{red:(index< chooseEnd && index>=chooseStart)}">{{hex.toUpperCase()}}</div>
+                            </div>
+                        </div>
+                    </wired-card>
+                    <wired-card v-if="ascArray.length !== 0" elevation="4">
+                        <div class="right-line">
+                            <div v-for="(hex,index) in ascArray" class="single">
+                                <div :class="{red:(index<chooseEnd && index>=chooseStart)}">{{hex}}</div>
+                            </div>
+                        </div>
+                    </wired-card>
                 </div>
             </div>
         </div>
@@ -53,7 +65,7 @@
     import {getBinaryInfo} from "./util/operFile";
     import "wired-button";
     import "wired-divider";
-    import "wired-checkbox";
+    import "wired-card";
 
     const {dialog} = require('electron').remote;
     const remote = require('electron').remote;
@@ -65,6 +77,8 @@
             return {
                 //16进制数组
                 hexArray: [],
+                //asc数组
+                ascArray: [],
                 pageHeight: window.innerHeight,
                 classFile: {
                     magic: {},//魔数
@@ -82,9 +96,12 @@
                     methods_count:{},//方法计数器
                     methods:[],//方法表
                     attribute_count: {},//属性表计数器
-                    attribute_info:[]//属性表
+                    attributes:[]//属性表
                 },
                 readIndex: 0,//解析时读取的指针
+                chooseStart:0,//鼠标选中的开始索引
+                chooseEnd:0,//鼠标选中的结束
+                chooseIndex:-1,//选中属性的index
             }
         },
         mounted() {
@@ -96,6 +113,21 @@
 
         },
         methods: {
+            // 窗口最小化
+            minWindow() {
+                remote.getCurrentWindow().minimize();
+            },
+            // 窗口最大化
+            maxWindow() {
+                const browserWindow = remote.getCurrentWindow();
+                browserWindow.unmaximize();
+            },
+            // 关闭窗口
+            closeWindow() {
+                console.log(111)
+                const browserWindow = remote.getCurrentWindow();
+                browserWindow.close();
+            },
             //获取文件
             upload() {
                 let self = this;
@@ -106,18 +138,33 @@
                         if (filePath) {
                             getBinaryInfo(filePath[0], (buf) => {
                                 var offset = 0;
+                                console.log(buf)
                                 while (offset < buf.length) {
                                     let s = buf[offset].toString(16);
                                     if (s.length === 1) {
                                         s = "0" + s;
                                     }
-                                    this.hexArray.push(s);
+                                    self.hexArray.push(s);
+                                    if (buf[offset] <= 126 && buf[offset] > 32) {
+                                        self.ascArray.push(String.fromCharCode(buf[offset]));
+                                    } else {
+                                        self.ascArray.push(".");
+                                    }
                                     offset++;
                                 }
+                                console.log(self.ascArray)
+                                console.log(self.hexArray)
                                 self.buildTree()
                             })
                         }
                     })
+            },
+            //选中一个元素
+            chooseItem(val,i) {
+                console.log(val)
+                this.chooseStart = val.startIndex;
+                this.chooseEnd = val.endIndex;
+                this.chooseIndex = i;
             },
             //创建树结构
             buildTree() {
@@ -252,7 +299,7 @@
             getAttributes() {
                 if (this.classFile.attribute_count.value > 0) {
                     for (let i = 0; i < this.classFile.attribute_count.value; i++) {
-                        this.classFile.attribute_info.push(this.getAttribute());
+                        this.classFile.attributes.push(this.getAttribute());
                     }
                 }
             },
@@ -821,6 +868,14 @@
                     resultStr.push(String.fromCharCode(curCharCode));
                 }
                 return resultStr.join("");
+            },
+            pad(num, n) {
+                var len = num.toString().length;
+                while(len < n) {
+                    num = "0" + num;
+                    len++;
+                }
+                return num;
             }
         }
     }
@@ -831,24 +886,25 @@
         width: 100%;
         height: 100%;
         /*background-color: #EFEFEF;*/
-        position: relative;
+        /*position: relative;*/
         overflow: hidden;
         .header {
-            top: 0;
+            /*top: 0;*/
             /*position: absolute;*/
-            display: flex;
-            flex-direction: row;
-            justify-items: center;
+            /*display: flex;*/
+            /*flex-direction: row;*/
+            /*justify-items: center;*/
             width: 100%;
             height: 40px;
             background-color: #ffffff;
-            margin-top: 10px;
+            /*margin-top: 10px;*/
             /*background-color: #FFA400;*/
             /*box-shadow: 0 0 4px #999999;*/
             /*z-index: 111;*/
-
+            -webkit-app-region: drag;
             .title {
                 color: #0F4DA8;
+                float: left;
                 /*color: #437DD4;*/
                 /*color: #6A94D4;*/
                 /*color: #FFA110;*/
@@ -860,6 +916,16 @@
                 width: 100px;
                 height: 40px;
                 line-height: 48px;
+            }
+            .titleBu{
+                font-family: "Gloria Hallelujah", sans-serif;
+                font-size: 20px;
+                width: 40px;
+                height: 40px;
+                float: right;
+                text-align:center;
+                line-height: 15px;
+                cursor: pointer;
             }
         }
 
@@ -876,8 +942,10 @@
             .-left-content {
                 float: left;
                 /*width: 20%;*/
-                width: 200px;
+                width: 250px;
                 height: 100%;
+                white-space: nowrap;
+                overflow-x: auto;
                 /*border-right: 1px solid #E4E4E4;*/
                 /*box-shadow: 0 0 4px #999999;*/
                 z-index: 101;
@@ -959,11 +1027,17 @@
                     margin-left: 20px;
                     margin-top: 20px;
                     font-size: 16px;
-                    font-weight: bolder;
-                    width: 90%;
+                    /*font-weight: bolder;*/
+                    /*width: 90%;*/
                     .classItem{
                         line-height: 25px;
                         height: 25px;
+                        &:hover{
+                            color: #FFA110;
+                        }
+                        .yellow {
+                            color: #FFA110;
+                        }
                     }
                 }
             }
@@ -979,39 +1053,82 @@
                 /*background-color: #E4E4E4;*/
                 /*position: relative;*/
                 .row-line {
+                    font-family: "Comic Sans MS";
                     /*font-family: Humanist;*/
                     display: flex;
                     flex-direction: row;
                     flex-wrap: wrap;
                     cursor: text;
                     max-width: 640px;
-
+                    color:#0F4DA8;
                     *::selection {
                         background: none repeat scroll 0 0 #FFA110;
                         color: #fff;
                         text-shadow: none;
                     }
-
                     line-height: 25px;
-                    height: 25px;
-
+                    /*height: 25px;*/
                     .single {
                         font-size: 16px;
                         text-align: center;
                         min-width: 40px;
                         border-radius: 3px;
-                        background: #ffffff;
+                        /*background: #ffffff;*/
                         /*<!--box-shadow: inset 2px 2px 3px #cccccc,-->*/
                         /*<!--inset -2px -2px 3px #fafafa;-->*/
 
                         :hover {
-                            border-radius: 3px;
+                            /*border-radius: 3px;*/
                             /*<!--background: linear-gradient(145deg, #cccccc, #fafafa);-->*/
                             /*<!--box-shadow: 2px 2px 3px #cccccc,-->*/
                             /*<!-- -2px -2px 3px #fafafa;-->*/
                         }
                     }
 
+                }
+                .right-line {
+                    font-family: "Comic Sans MS";
+                    /*font-family: Humanist;*/
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    cursor: text;
+                    max-width: 200px;
+                    /*color: lightyellow;*/
+                    *::selection {
+                        background: none repeat scroll 0 0 #FFA110;
+                        color: #fff;
+                        text-shadow: none;
+                    }
+                    line-height: 25px;
+                    .single {
+                        font-size: 16px;
+                        text-align: center;
+                        min-width: 12px;
+                        border-radius: 3px;
+                    }
+                }
+                .left-line {
+                    font-family: "Comic Sans MS",Humanist,serif;
+                    /*font-family: Humanist;*/
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    cursor: text;
+                    max-width: 80px;
+                    /*color: lightyellow;*/
+                    *::selection {
+                        background: none repeat scroll 0 0 #FFA110;
+                        color: #fff;
+                        text-shadow: none;
+                    }
+                    line-height: 25px;
+                    .single {
+                        font-size: 16px;
+                        text-align: center;
+                        min-width: 12px;
+                        border-radius: 3px;
+                    }
                 }
 
                 .-right-bar {
@@ -1047,7 +1164,7 @@
                     /*max-height: 500px;*/
                     overflow-y: scroll;
                     display: flex;
-                    flex-direction: row;
+                    flex-direction: column;
                     align-content: flex-start;
                     flex-wrap: wrap;
                     /*margin-left: 10px;*/
@@ -1062,6 +1179,10 @@
                         justify-content: center;
                         align-items: center;
                         padding-bottom: 100px;
+                    }
+                    .red{
+                        color: red;
+                        background-color: #999999;
                     }
 
                     .-book-item {

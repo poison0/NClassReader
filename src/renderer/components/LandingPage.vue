@@ -2,8 +2,9 @@
     <div class="page">
         <div class="header">
             <div class="title">ClassReader</div>
-            <wired-card class="titleBu" @click="closeWindow()">x</wired-card>
-            <wired-card class="titleBu" @click="maxWindow()">□</wired-card>
+            <wired-card class="titleBuC" @click="closeWindow()">x</wired-card>
+            <wired-card v-show="!isMaxWindow" class="titleBu" @click="maxWindow()">□</wired-card>
+            <wired-card v-show="isMaxWindow" class="titleBu" @click="maxWindow()">=</wired-card>
             <wired-card class="titleBu" @click="minWindow()">-</wired-card>
         </div>
         <wired-divider elevation="1" ></wired-divider>
@@ -15,16 +16,17 @@
                     </div>
                 </div>
                 <div class="classFile">
-                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">
-                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem" @click="chooseItem(val,i)">
-                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
-                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>
-                        </div>
-                        <div v-else class="classItem">
-                            <img src="./img/wjj1.jpg" height="20px" width="20px"><img/>
-                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>
-                        </div>
-                    </div>
+<!--                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">-->
+<!--                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem" @click="chooseItem(val,i)">-->
+<!--                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
+<!--                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>-->
+<!--                        </div>-->
+<!--                        <div v-else class="classItem">-->
+<!--                            <img src="./img/wjj1.jpg" height="20px" width="20px"><img/>-->
+<!--                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                    <tree-menu :classFile="classFile" :isLoad="isLoad"></tree-menu>
                 </div>
                 <div class="bookArea">
                 </div>
@@ -61,7 +63,7 @@
 </template>
 
 <script>
-    import SystemInformation from './LandingPage/SystemInformation'
+    import TreeMenu from './LandingPage/TreeMenu'
     import {getBinaryInfo} from "./util/operFile";
     import "wired-button";
     import "wired-divider";
@@ -72,7 +74,7 @@
 
     export default {
         name: 'landing-page',
-        components: {SystemInformation},
+        components: {TreeMenu},
         data() {
             return {
                 //16进制数组
@@ -102,6 +104,8 @@
                 chooseStart:0,//鼠标选中的开始索引
                 chooseEnd:0,//鼠标选中的结束
                 chooseIndex:-1,//选中属性的index
+                isMaxWindow:false,
+                isLoad:false,
             }
         },
         mounted() {
@@ -109,6 +113,14 @@
             //监视页面大小变化
             remote.getCurrentWindow().on('resize', (a) => {
                 self.pageHeight = window.innerHeight;
+            })
+            //监视页面最大化
+            remote.getCurrentWindow().on('maximize', function () {
+                self.isMaxWindow = true;
+            })
+            //监视页面最大化
+            remote.getCurrentWindow().on('unmaximize', function () {
+                self.isMaxWindow = false;
             })
 
         },
@@ -119,8 +131,12 @@
             },
             // 窗口最大化
             maxWindow() {
-                const browserWindow = remote.getCurrentWindow();
-                browserWindow.unmaximize();
+                const mainWindow = remote.getCurrentWindow();
+                if (mainWindow.isMaximized()) {
+                    mainWindow.restore();
+                } else {
+                    mainWindow.maximize();
+                }
             },
             // 关闭窗口
             closeWindow() {
@@ -161,7 +177,7 @@
             },
             //选中一个元素
             chooseItem(val,i) {
-                console.log(val)
+                // console.log(val)
                 this.chooseStart = val.startIndex;
                 this.chooseEnd = val.endIndex;
                 this.chooseIndex = i;
@@ -185,6 +201,7 @@
                 this.getAttributeCount();
                 this.getAttributes();
                 console.log(this.classFile)
+                this.isLoad = true;
             },
             //读取魔数
             getMagic() {
@@ -926,6 +943,24 @@
                 text-align:center;
                 line-height: 15px;
                 cursor: pointer;
+                -webkit-app-region:no-drag;
+                &:hover{
+                    background-color: #999999;
+                }
+            }
+            .titleBuC{
+                font-family: "Gloria Hallelujah", sans-serif;
+                font-size: 20px;
+                width: 40px;
+                height: 40px;
+                float: right;
+                text-align:center;
+                line-height: 15px;
+                cursor: pointer;
+                -webkit-app-region:no-drag;
+                &:hover{
+                    background-color: red;
+                }
             }
         }
 

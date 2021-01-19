@@ -140,7 +140,6 @@
             },
             // 关闭窗口
             closeWindow() {
-                console.log(111)
                 const browserWindow = remote.getCurrentWindow();
                 browserWindow.close();
             },
@@ -154,7 +153,6 @@
                         if (filePath) {
                             getBinaryInfo(filePath[0], (buf) => {
                                 var offset = 0;
-                                console.log(buf)
                                 while (offset < buf.length) {
                                     let s = buf[offset].toString(16);
                                     if (s.length === 1) {
@@ -168,8 +166,6 @@
                                     }
                                     offset++;
                                 }
-                                console.log(self.ascArray)
-                                console.log(self.hexArray)
                                 self.buildTree()
                             })
                         }

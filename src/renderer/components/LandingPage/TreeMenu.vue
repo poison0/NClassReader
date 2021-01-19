@@ -6,8 +6,8 @@
         <span :class="{yellow: chooseIndex === i }">{{key}}</span>
       </div>
       <div v-else class="classItem" @click="chooseItem(val,i)">
-        <span v-show="!isMenuLoad[key]" class="add">+</span>
-        <span v-show="isMenuLoad[key]" class="add">-</span>
+        <span @click="open(key)" v-show="!isMenuLoad[key]" class="add">+</span>
+        <span @click="open(key)" v-show="isMenuLoad[key]" class="add">-</span>
         <span :class="{yellow: chooseIndex === i }" @click="open(key)">{{key}}</span>
         <div class="stepDiv" v-for="(val1,key1,i1) in val">
           <tree-menu :class-file="val1" :isLoad="isMenuLoad[key]"></tree-menu>
@@ -39,7 +39,7 @@
           this.isMenuLoad[key] = false;
         }
       }
-      console.log(this.isMenuLoad)
+      // console.log(this.isMenuLoad)
     },
     methods:{
       //选中一个元素
@@ -50,15 +50,27 @@
         this.chooseIndex = i;
       },
       open(key) {
+        console.log(key)
         console.log(this.isMenuLoad[key])
         this.isMenuLoad[key] = !this.isMenuLoad[key];
+        this.$forceUpdate()
       }
     }
   }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .stepDiv{
   margin-left: 10px;
+}
+.classItem{
+  line-height: 25px;
+  height: 25px;
+  &:hover{
+     color: #FFA110;
+   }
+  .yellow {
+    color: #FFA110;
+  }
 }
 </style>

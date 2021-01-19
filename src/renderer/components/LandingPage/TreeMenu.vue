@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-show="isLoad" v-for="(val,key,i) in classFile">
+    <div v-if="isLoad" v-for="(val,key,i) in classFile">
       <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem" @click="chooseItem(val,i)">
         <img src="../img/wd1.jpg" height="20px" width="20px"><img/>
         <span :class="{yellow: chooseIndex === i }">{{key}}</span>

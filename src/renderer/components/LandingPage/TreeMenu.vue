@@ -1,16 +1,18 @@
 <template>
   <div>
     <div v-if="isLoad" v-for="(val,key,i) in classFile">
-      <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem" @click="chooseItem(val,i)">
+      <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="stepDiv" @click="chooseItem(val,i)">
         <img src="../img/wd1.jpg" height="20px" width="20px"><img/>
         <span :class="{yellow: chooseIndex === i }">{{key}}</span>
       </div>
       <div v-else class="classItem" @click="chooseItem(val,i)">
         <span @click="open(key)" v-show="!isMenuLoad[key]" class="add">+</span>
         <span @click="open(key)" v-show="isMenuLoad[key]" class="add">-</span>
-        <span :class="{yellow: chooseIndex === i }" @click="open(key)">{{key}}</span>
+        <span @click="open(key)">{{key}}</span>
         <div class="stepDiv" v-for="(val1,key1,i1) in val">
-          <tree-menu :class-file="val1" :isLoad="isMenuLoad[key]"></tree-menu>
+          <div>{{i1}}
+            <tree-menu :class-file="val1" :isLoad="isMenuLoad[key]"></tree-menu>
+          </div>
         </div>
       </div>
     </div>
@@ -62,15 +64,15 @@
 <style lang="scss" scoped>
 .stepDiv{
   margin-left: 10px;
-}
-.classItem{
-  line-height: 25px;
-  height: 25px;
   &:hover{
-     color: #FFA110;
-   }
+    color: #FFA110;
+  }
   .yellow {
     color: #FFA110;
   }
+}
+.classItem{
+  line-height: 25px;
+  /*height: 25px;*/
 }
 </style>

@@ -7,7 +7,7 @@
             <wired-card v-show="isMaxWindow" class="titleBu" @click="maxWindow()">=</wired-card>
             <wired-card class="titleBu" @click="minWindow()">-</wired-card>
         </div>
-        <wired-divider elevation="1" ></wired-divider>
+        <wired-divider elevation="1"></wired-divider>
         <div class="content">
             <div class="-left-content">
                 <div class="bottomNav">
@@ -16,17 +16,41 @@
                     </div>
                 </div>
                 <div class="classFile">
-<!--                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">-->
-<!--                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem" @click="chooseItem(val,i)">-->
-<!--                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
-<!--                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>-->
-<!--                        </div>-->
-<!--                        <div v-else class="classItem">-->
-<!--                            <img src="./img/wjj1.jpg" height="20px" width="20px"><img/>-->
-<!--                             <span :class="{yellow: chooseIndex === i }">{{key}}</span>-->
-<!--                        </div>-->
-<!--                    </div>-->
-                    <tree-menu :classFile="classFile" :isLoad="isLoad"></tree-menu>
+                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">
+                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem"
+                             @click="chooseItem(val,i)">
+                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
+                            <span :class="{yellow: chooseIndex === i }">{{key}}</span>
+                        </div>
+                        <div v-else class="classItem">
+                            <div v-show="key === 'constant_pool'" class="constant_pool">
+                                <span class="add">+</span>
+                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length+1}})</span>
+                                <div v-for="(conVal,conKey,conI) in val" class="constant_item">
+                                    <div><span class="add">+ </span>{{conKey+1}}:{{conVal.type}}</div>
+                                    <div v-for="(conItemVal,conItemKey) in conVal" v-if="conItemKey !== 'type' && conItemKey !== 'link_value'"
+                                         class="constant_item_tag">
+                                        <div v-if="conItemKey === 'tag'">
+                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
+                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>
+                                        </div>
+                                        <div v-else-if="conItemKey === 'CONSTANT_Class'">
+                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
+                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>
+                                        </div>
+                                        <div v-else-if="conItemKey === 'bytes'">
+                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
+                                            <span>{{conItemKey}}:{{conVal.link_value}}</span>
+                                        </div>
+                                        <div v-else>
+                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
+                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="bookArea">
                 </div>
@@ -92,20 +116,20 @@
                     this_class: {},//类索引
                     super_class: {},//父类索引
                     interfaces_count: {},//接口计数器
-                    interfaces:[],//接口表
-                    fields_count:{},//字段计数器
-                    fields:[],//字段表
-                    methods_count:{},//方法计数器
-                    methods:[],//方法表
+                    interfaces: [],//接口表
+                    fields_count: {},//字段计数器
+                    fields: [],//字段表
+                    methods_count: {},//方法计数器
+                    methods: [],//方法表
                     attribute_count: {},//属性表计数器
-                    attributes:[]//属性表
+                    attributes: []//属性表
                 },
                 readIndex: 0,//解析时读取的指针
-                chooseStart:0,//鼠标选中的开始索引
-                chooseEnd:0,//鼠标选中的结束
-                chooseIndex:-1,//选中属性的index
-                isMaxWindow:false,
-                isLoad:false,
+                chooseStart: 0,//鼠标选中的开始索引
+                chooseEnd: 0,//鼠标选中的结束
+                chooseIndex: -1,//选中属性的index
+                isMaxWindow: false,
+                isLoad: false,
             }
         },
         mounted() {
@@ -172,7 +196,7 @@
                     })
             },
             //选中一个元素
-            chooseItem(val,i) {
+            chooseItem(val, i) {
                 // console.log(val)
                 this.chooseStart = val.startIndex;
                 this.chooseEnd = val.endIndex;
@@ -221,7 +245,7 @@
             },
             //读取类访问标志
             getAccessFlags() {
-                this.classFile.access_flags = this.getUFields(2,"类访问标志")
+                this.classFile.access_flags = this.getUFields(2, "类访问标志")
                 let flags = [0x0001, 0x0010, 0x0020, 0x0200, 0x0400, 0x1000, 0x2000, 0x4000];
                 //添加标志类型
                 this.classFile.access_flags["sign"] = []
@@ -229,7 +253,7 @@
                     let arg = flags[key]
                     //标志的值如果与class文件中值的与运算还等于本身的话，说明包含此标志，一个类可以有多个标志
                     if ((arg & parseInt(this.classFile.access_flags.hexArray.join(""), 16)) === arg) {
-                        switch (arg){
+                        switch (arg) {
                             case 0x0001:
                                 this.classFile.access_flags["sign"].push("ACC_PUBLIC");
                                 break;
@@ -266,7 +290,7 @@
             //读取父类索引
             getSuperClass() {
                 this.classFile.super_class = this.getUFields(2, "父类索引")
-                if(this.classFile.super_class.value !== 0){
+                if (this.classFile.super_class.value !== 0) {
                     this.classFile.super_class["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.super_class.value));
                 }
             },
@@ -319,17 +343,17 @@
             //读取一个方法
             getMethod() {
                 let field = {
-                    access_flags:{},
-                    name_index:{},
-                    descriptor_index:{},
-                    attributes_count:{},
+                    access_flags: {},
+                    name_index: {},
+                    descriptor_index: {},
+                    attributes_count: {},
                     attribute_info: []
                 }
                 //TODO 方法访问标志
-                field.access_flags  = this.getUFields(2, "标志");
-                field.name_index  = this.getUFields(2, "字段名");
-                field.descriptor_index  = this.getUFields(2, "字段描述符");
-                field.attributes_count  = this.getUFields(2, "附加属性数量");
+                field.access_flags = this.getUFields(2, "标志");
+                field.name_index = this.getUFields(2, "字段名");
+                field.descriptor_index = this.getUFields(2, "字段描述符");
+                field.attributes_count = this.getUFields(2, "附加属性数量");
                 for (let i = 0; i < field.attributes_count.value; i++) {
                     field.attribute_info.push(this.getAttribute());
                 }
@@ -338,24 +362,24 @@
             //读取一个字段
             getField() {
                 let field = {
-                    access_flags:{},
-                    name_index:{},
-                    descriptor_index:{},
-                    attributes_count:{},
+                    access_flags: {},
+                    name_index: {},
+                    descriptor_index: {},
+                    attributes_count: {},
                     attribute_info: []
                 }
                 //TODO 字段访问标志
-                field.access_flags  = this.getUFields(2, "标志");
-                field.name_index  = this.getUFields(2, "字段名");
-                field.descriptor_index  = this.getUFields(2, "字段描述符");
-                field.attributes_count  = this.getUFields(2, "附加属性数量");
+                field.access_flags = this.getUFields(2, "标志");
+                field.name_index = this.getUFields(2, "字段名");
+                field.descriptor_index = this.getUFields(2, "字段描述符");
+                field.attributes_count = this.getUFields(2, "附加属性数量");
                 for (let i = 0; i < field.attributes_count.value; i++) {
                     field.attribute_info.push(this.getAttribute());
                 }
                 return field;
             },
             //获取一个属性
-            getAttribute(){
+            getAttribute() {
                 let attr = {
                     attribute_name_index: {},
                     attribute_length: {}
@@ -410,8 +434,8 @@
                         //遇到不认识的属性，直接跳过
                         this.readIndex += attr.attribute_length.value;
                 }
-                for(let i in lastAttr){
-                    attr[i]=lastAttr[i];
+                for (let i in lastAttr) {
+                    attr[i] = lastAttr[i];
                 }
                 return attr;
             },
@@ -422,28 +446,28 @@
                     max_locals: this.getUFields(2, "局部变量个数"),
                     code_length: this.getUFields(4, "code数组字节数"),
                     code: [],//指令
-                    exception_table_length:{},
-                    exception_table:[],
+                    exception_table_length: {},
+                    exception_table: [],
                     attributes_count: {},
-                    attributes:[]
+                    attributes: []
                 };
                 for (let i = 0; i < attr.code_length.value; i++) {
                     //TODO 指令
                     attr.code.push(this.getUFields(1, "指令"))
                 }
                 attr.exception_table_length = this.getUFields(2, "exception_table个数");
-                for (let i = 0; i <attr.exception_table_length.value; i++) {
+                for (let i = 0; i < attr.exception_table_length.value; i++) {
                     let table = {
-                        start_pc : this.getUFields(2, "有效范围"),
-                        end_pc : this.getUFields(2, "有效范围"),
-                        handle_pc : this.getUFields(2, "异常处理起点"),
+                        start_pc: this.getUFields(2, "有效范围"),
+                        end_pc: this.getUFields(2, "有效范围"),
+                        handle_pc: this.getUFields(2, "异常处理起点"),
                         //TODO class
-                        catch_type : this.getUFields(2, "异常类")
+                        catch_type: this.getUFields(2, "异常类")
                     }
                     attr.exception_table.push(table)
                 }
                 attr.attributes_count = this.getUFields(2, "attributes个数");
-                for (let i = 0; i <attr.attributes_count.value; i++) {
+                for (let i = 0; i < attr.attributes_count.value; i++) {
                     attr.exception_table.push(this.getAttribute())
                 }
                 return attr;
@@ -451,13 +475,13 @@
             //获取RuntimeVisibleParameterAnnotations属性
             getAttrRuntimeVisibleParameterAnnotations() {
                 let attr = {
-                    num_parameters:this.getUFields(2, "形参注解数量"),
-                    parameter_annotations:[]
+                    num_parameters: this.getUFields(2, "形参注解数量"),
+                    parameter_annotations: []
                 };
                 for (let i = 0; i < attr.num_parameters.value; i++) {
                     let parameter = {
                         num_annotations: this.getUFields(2, "可见注解数量"),
-                        annotations:[]
+                        annotations: []
                     }
                     for (let i = 0; i < attr.num_parameters.value; i++) {
                         parameter.annotations.push(this.getAnnotation())
@@ -469,8 +493,8 @@
             //获取RuntimeVisibleAnnotations属性
             getAttrRuntimeVisibleAnnotations() {
                 let attr = {
-                    num_annotations:this.getUFields(2, "注解数量"),
-                    annotations:[]
+                    num_annotations: this.getUFields(2, "注解数量"),
+                    annotations: []
                 };
                 for (let i = 0; i < attr.num_annotations.value; i++) {
                     attr.annotations.push(this.getAnnotation());
@@ -481,13 +505,13 @@
             getAnnotation() {
                 let annotation = {
                     //TODO utf8索引
-                    type_index:this.getUFields(2, "索引"),
-                    num_element_value_pairs:this.getUFields(2, "注解键值对个数"),
-                    element_value_pairs:[]
+                    type_index: this.getUFields(2, "索引"),
+                    num_element_value_pairs: this.getUFields(2, "注解键值对个数"),
+                    element_value_pairs: []
                 }
                 for (let i = 0; i < annotation.num_element_value_pairs.value; i++) {
                     let element = {
-                        element_name_index:this.getUFields(2, "索引"),
+                        element_name_index: this.getUFields(2, "索引"),
                         element_value: this.getElementValue()
                     }
                     annotation.element_value_pairs.push(element)
@@ -495,9 +519,9 @@
                 return annotation;
             },
             //获取elementValue字段
-            getElementValue(){
+            getElementValue() {
                 let element_value = {
-                    tag:this.getUFields(1, "值类型"),
+                    tag: this.getUFields(1, "值类型"),
                 }
                 switch (String.fromCharCode(element_value.tag.value)) {
                     case "B":
@@ -529,8 +553,8 @@
                         break;
                     case "e":
                         element_value["enum_const_value"] = {
-                            type_name_index : this.getUFields(2, "枚举常量类型的二进制名称的内部形式"),
-                            const_name_index : this.getUFields(2, "简单名称"),
+                            type_name_index: this.getUFields(2, "枚举常量类型的二进制名称的内部形式"),
+                            const_name_index: this.getUFields(2, "简单名称"),
                         }
                         break;
                     case "c":
@@ -554,18 +578,18 @@
             //获取LocalVariableTypeTable属性
             getAttrLocalVariableTypeTable() {
                 let attr = {
-                    local_variable_type_table_length:this.getUFields(2, "成员数量"),
-                    local_variable_type_table:[]
+                    local_variable_type_table_length: this.getUFields(2, "成员数量"),
+                    local_variable_type_table: []
                 };
                 for (let i = 0; i < attr.local_variable_type_table_length.value; i++) {
                     let table = {
-                        start_pc:this.getUFields(2, "索引"),
-                        length:this.getUFields(2, "索引"),
+                        start_pc: this.getUFields(2, "索引"),
+                        length: this.getUFields(2, "索引"),
                         //TODO utf8索引
-                        name_index:this.getUFields(2, "局部变量"),
+                        name_index: this.getUFields(2, "局部变量"),
                         //TODO utf8索引
-                        signature_index:this.getUFields(2, "局部变量字段描述符"),
-                        index:this.getUFields(2, "局部变量表中的索引"),
+                        signature_index: this.getUFields(2, "局部变量字段描述符"),
+                        index: this.getUFields(2, "局部变量表中的索引"),
                     }
                     attr.local_variable_type_table.push(table);
                 }
@@ -574,18 +598,18 @@
             //获取LocalVariableTable属性
             getAttrLocalVariableTable() {
                 let attr = {
-                    local_variable_table_length:this.getUFields(2, "成员数量"),
-                    local_variable_table:[]
+                    local_variable_table_length: this.getUFields(2, "成员数量"),
+                    local_variable_table: []
                 };
                 for (let i = 0; i < attr.local_variable_table_length.value; i++) {
                     let table = {
-                        start_pc:this.getUFields(2, "索引"),
-                        length:this.getUFields(2, "索引"),
+                        start_pc: this.getUFields(2, "索引"),
+                        length: this.getUFields(2, "索引"),
                         //TODO utf8索引
-                        name_index:this.getUFields(2, "局部变量"),
+                        name_index: this.getUFields(2, "局部变量"),
                         //TODO utf8索引
-                        descriptor_index:this.getUFields(2, "局部变量字段描述符"),
-                        index:this.getUFields(2, "局部变量表中的索引"),
+                        descriptor_index: this.getUFields(2, "局部变量字段描述符"),
+                        index: this.getUFields(2, "局部变量表中的索引"),
                     }
                     attr.local_variable_table.push(table);
                 }
@@ -595,7 +619,7 @@
             getAttrSourceFile() {
                 let attr = {
                     //TODO utf8索引
-                    sourcefile_index:this.getUFields(2, "源文件名")
+                    sourcefile_index: this.getUFields(2, "源文件名")
                 };
                 attr.sourcefile_index["link_value"] = this.hexCharCodeToStr(this.classFile.constant_pool[attr.sourcefile_index.value - 1].bytes.hexArray.join(""));
                 return attr;
@@ -610,9 +634,9 @@
             //获取EnclosingMethod属性 局部类或匿名类才有
             getAttrEnclosingMethod() {
                 let attr = {
-                    class_index:this.getUFields(2, "内层类"),
+                    class_index: this.getUFields(2, "内层类"),
                     //TODO nameAndType结构
-                    method_index:this.getUFields(2, "对应的方法名和方法类型")
+                    method_index: this.getUFields(2, "对应的方法名和方法类型")
                 };
                 attr.class_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(this.classFile.class_index.value))
                 return attr;
@@ -621,17 +645,17 @@
             getAttrInnerClasses() {
                 let attr = {
                     number_of_classes: {},
-                    classes:[]
+                    classes: []
                 };
 
                 attr.number_of_classes = this.getUFields(2, "成员数量");
                 for (let i = 0; i < attr.number_of_classes.value; i++) {
                     let clazz = {
-                        inner_class_info_index:this.getUFields(2, "内部类符号引用"),
-                        outer_class_info_index:this.getUFields(2, "宿主类符号引用"),
-                        inner_name_index:this.getUFields(2, "内部类名称"),
+                        inner_class_info_index: this.getUFields(2, "内部类符号引用"),
+                        outer_class_info_index: this.getUFields(2, "宿主类符号引用"),
+                        inner_name_index: this.getUFields(2, "内部类名称"),
                         //TODO 类访问标志
-                        inner_class_access_flags:this.getUFields(2, "内部类访问标志"),
+                        inner_class_access_flags: this.getUFields(2, "内部类访问标志"),
                     }
                     clazz.inner_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(clazz.inner_class_info_index.value));
                     clazz.outer_class_info_index["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(clazz.outer_class_info_index.value));
@@ -640,39 +664,39 @@
                 return attr;
             },
             //获取LineNumberTable属性
-            getAttrLineNumberTable(){
+            getAttrLineNumberTable() {
                 let attr = {
                     line_number_table_length: {},
-                    line_number_table:[]
+                    line_number_table: []
                 };
                 attr.line_number_table_length = this.getUFields(2, "成员数量");
                 for (let i = 0; i < attr.line_number_table_length.value; i++) {
                     let start_pc = this.getUFields(2, "字节码行号");
                     let line_number = this.getUFields(2, "java源码行号");
                     let line_number_info = {
-                        start_pc:start_pc,
-                        line_number:line_number
+                        start_pc: start_pc,
+                        line_number: line_number
                     }
                     attr.line_number_table.push(line_number_info)
                 }
                 return attr;
             },
             //获取Exceptions属性
-            getAttrExceptions(){
+            getAttrExceptions() {
                 let attr = {
                     number_of_exceptions: {},
-                    exception_index_table:[]
+                    exception_index_table: []
                 };
                 attr.number_of_exceptions = this.getUFields(2, "成员数量");
                 for (let i = 0; i < attr.number_of_exceptions.value; i++) {
-                     let exception = this.getUFields(2, "异常类类型");
-                     exception["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(exception.value));
-                     attr.exception_index_table.push(exception)
+                    let exception = this.getUFields(2, "异常类类型");
+                    exception["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(exception.value));
+                    attr.exception_index_table.push(exception)
                 }
                 return attr;
             },
             //获取ConstantValue属性
-            getAttrConstantValue(){
+            getAttrConstantValue() {
                 let attr = {
                     constantValue_index: {},
                 };
@@ -681,7 +705,7 @@
             },
             //读取接口表的属性
             //num : 接口表个数
-            getInterfacesAttr(num){
+            getInterfacesAttr(num) {
                 let interfaceAttr = [];
                 for (let i = 0; i < num; i++) {
                     let addr = this.getUFields(2, "接口表");
@@ -692,88 +716,89 @@
             },
             //获取常量池的属性
             //num : 常量池个数
-            getConstantPoolAttr(num){
+            getConstantPoolAttr(num) {
                 let constantPool = [];
-                for (let i = 1; i <= num-1; i++) {
+                for (let i = 1; i <= num - 1; i++) {
                     let attr = {};
                     //获取tag值
-                    let tag = this.getUFields(1,"值")
+                    let tag = this.getUFields(1, "值")
                     attr["tag"] = tag;
                     switch (tag.value) {
                         case 1:
                             attr["type"] = "CONSTANT_utf8"
-                            let length = this.getUFields(2,"长度")
+                            let length = this.getUFields(2, "长度")
                             attr["length"] = length;
                             //获取内容
-                            attr["bytes"] = this.getStr(length.value,"字符串")
+                            attr["bytes"] = this.getStr(length.value, "字符串")
+                            attr['link_value'] = this.hexCharCodeToStr(attr.bytes.hexArray.join(""))
                             break;
                         case 3:
                             attr["type"] = "CONSTANT_Integer"
-                            attr["bytes"] = this.getUFields(4,"整型")
+                            attr["bytes"] = this.getUFields(4, "整型")
                             break;
                         case 4:
                             attr["type"] = "CONSTANT_Float"
-                            attr["bytes"] = this.getUFields(4,"浮点型")
+                            attr["bytes"] = this.getUFields(4, "浮点型")
                             break;
                         case 5:
                             attr["type"] = "CONSTANT_Long"
-                            attr["high_bytes"] = this.getUFields(4,"长整型")
-                            attr["low_bytes"] = this.getUFields(4,"长整型")
+                            attr["high_bytes"] = this.getUFields(4, "长整型")
+                            attr["low_bytes"] = this.getUFields(4, "长整型")
                             break;
                         case 6:
                             attr["type"] = "CONSTANT_Double"
-                            attr["high_bytes"] = this.getUFields(4,"双精度浮点型")
-                            attr["low_bytes"] = this.getUFields(4,"双精度浮点型")
+                            attr["high_bytes"] = this.getUFields(4, "双精度浮点型")
+                            attr["low_bytes"] = this.getUFields(4, "双精度浮点型")
                             break;
                         case 7:
                             attr["type"] = "CONSTANT_Class"
                             //对常量池的一个有效索引
-                            attr["name_index"] = this.getUFields(2,"类或接口的符号引用")
+                            attr["name_index"] = this.getUFields(2, "类或接口的符号引用")
                             break;
                         case 8:
                             attr["type"] = "CONSTANT_String"
-                            attr["string_index"] = this.getUFields(2,"字符串类型字面量")
+                            attr["string_index"] = this.getUFields(2, "字符串类型字面量")
                             break;
                         case 9:
                             attr["type"] = "CONSTANT_Fieldref"
-                            attr["class_index"] = this.getUFields(2,"字段的符号引用")
-                            attr["name_and_type_index"] = this.getUFields(2,"字段的名称和描述符")
+                            attr["class_index"] = this.getUFields(2, "字段的符号引用")
+                            attr["name_and_type_index"] = this.getUFields(2, "字段的名称和描述符")
                             break;
                         case 10:
                             attr["type"] = "CONSTANT_Methodref"
-                            attr["class_index"] = this.getUFields(2,"类中方法的符号引用")
-                            attr["name_and_type_index"] = this.getUFields(2,"类中方法的名称和描述符")
+                            attr["class_index"] = this.getUFields(2, "类中方法的符号引用")
+                            attr["name_and_type_index"] = this.getUFields(2, "类中方法的名称和描述符")
                             break;
                         case 11:
                             attr["type"] = "CONSTANT_InterfaceMethodref"
-                            attr["class_index"] = this.getUFields(2,"接口中方法的符号引用")
-                            attr["name_and_type_index"] = this.getUFields(2,"接口中方法的名称和描述符")
+                            attr["class_index"] = this.getUFields(2, "接口中方法的符号引用")
+                            attr["name_and_type_index"] = this.getUFields(2, "接口中方法的名称和描述符")
                             break;
                         case 12:
                             attr["type"] = "CONSTANT_NameAndType"
-                            attr["name_index"] = this.getUFields(2,"方法或字段的部分符号引用")
-                            attr["descriptor_index"] = this.getUFields(2,"有效的字段描述符或者方法描述符")
+                            attr["name_index"] = this.getUFields(2, "方法或字段的部分符号引用")
+                            attr["descriptor_index"] = this.getUFields(2, "有效的字段描述符或者方法描述符")
                             break;
                         case 15:
                             attr["type"] = "CONSTANT_MethodHandle"
-                            attr["reference_kind"] = this.getUFields(1,"句柄类型")
-                            attr["reference_index"] = this.getUFields(2,"句柄名称")
+                            attr["reference_kind"] = this.getUFields(1, "句柄类型")
+                            attr["reference_index"] = this.getUFields(2, "句柄名称")
                             break;
                         case 16:
                             attr["type"] = "CONSTANT_MethodType"
-                            attr["descriptor_index"] = this.getUFields(1,"方法的描述符")
+                            attr["descriptor_index"] = this.getUFields(1, "方法的描述符")
                             break;
                         case 18:
                             attr["type"] = "CONSTANT_InvokeDynamic"
-                            attr["bootstrap_method_attr_index"] = this.getUFields(2,"引导方法表的索引")
-                            attr["name_and_type_index"] = this.getUFields(2,"方法名和方法描述符")
+                            attr["bootstrap_method_attr_index"] = this.getUFields(2, "引导方法表的索引")
+                            attr["name_and_type_index"] = this.getUFields(2, "方法名和方法描述符")
                             break;
                     }
                     constantPool.push(attr);
                     //因为jvm开发时是处于32位机为主流的时代，所以为了向下兼容，double和long类型的常量占两个空间
                     if (tag.value === 5 || tag.value === 6) {
                         constantPool.push({
-                            type:"empty",
+                            type: "empty",
                         });
                         i++;
                     }
@@ -782,16 +807,16 @@
             },
             //获取常量池中对应的类名
             //index : 索引
-            getConstantClassStr(index){
+            getConstantClassStr(index) {
                 //等于0说明是空的，常量池没有0项元素
-                if(index === 1){
+                if (index === 1) {
                     return ""
-                }else{
+                } else {
                     return this.classFile.constant_pool[this.classFile.constant_pool[index - 1].name_index.value - 1].bytes.hexArray.join("")
                 }
             },
             //获取字符串
-            getStr(num,typeName){
+            getStr(num, typeName) {
                 let start = this.readIndex;
                 let u = {
                     startIndex: start,
@@ -884,7 +909,7 @@
             },
             pad(num, n) {
                 var len = num.toString().length;
-                while(len < n) {
+                while (len < n) {
                     num = "0" + num;
                     len++;
                 }
@@ -901,6 +926,7 @@
         /*background-color: #EFEFEF;*/
         /*position: relative;*/
         overflow: hidden;
+
         .header {
             /*top: 0;*/
             /*position: absolute;*/
@@ -915,6 +941,7 @@
             /*box-shadow: 0 0 4px #999999;*/
             /*z-index: 111;*/
             -webkit-app-region: drag;
+
             .title {
                 color: #0F4DA8;
                 float: left;
@@ -930,31 +957,35 @@
                 height: 40px;
                 line-height: 48px;
             }
-            .titleBu{
+
+            .titleBu {
                 font-family: "Gloria Hallelujah", sans-serif;
                 font-size: 20px;
                 width: 40px;
                 height: 40px;
                 float: right;
-                text-align:center;
+                text-align: center;
                 line-height: 15px;
                 cursor: pointer;
-                -webkit-app-region:no-drag;
-                &:hover{
+                -webkit-app-region: no-drag;
+
+                &:hover {
                     background-color: #999999;
                 }
             }
-            .titleBuC{
+
+            .titleBuC {
                 font-family: "Gloria Hallelujah", sans-serif;
                 font-size: 20px;
                 width: 40px;
                 height: 40px;
                 float: right;
-                text-align:center;
+                text-align: center;
                 line-height: 15px;
                 cursor: pointer;
-                -webkit-app-region:no-drag;
-                &:hover{
+                -webkit-app-region: no-drag;
+
+                &:hover {
                     background-color: red;
                 }
             }
@@ -1049,6 +1080,7 @@
                         width: 90%;
                     }
                 }
+
                 .classFile {
                     display: flex;
                     flex-direction: column;
@@ -1060,14 +1092,29 @@
                     font-size: 16px;
                     /*font-weight: bolder;*/
                     /*width: 90%;*/
-                    .classItem{
+                    .classItem {
                         line-height: 25px;
-                        height: 25px;
-                        &:hover{
+                        /*height: 25px;*/
+                        &:hover {
                             color: #FFA110;
                         }
+
                         .yellow {
                             color: #FFA110;
+                        }
+
+                        .constant_pool {
+
+                        }
+
+                        .constant_item {
+                            /*height: 25px;*/
+                            margin-left: 10px;
+
+                            .constant_item_tag {
+                                height: 25px;
+                                margin-left: 10px;
+                            }
                         }
                     }
                 }
@@ -1091,12 +1138,14 @@
                     flex-wrap: wrap;
                     cursor: text;
                     max-width: 640px;
-                    color:#0F4DA8;
+                    color: #0F4DA8;
+
                     *::selection {
                         background: none repeat scroll 0 0 #FFA110;
                         color: #fff;
                         text-shadow: none;
                     }
+
                     line-height: 25px;
                     /*height: 25px;*/
                     .single {
@@ -1117,6 +1166,7 @@
                     }
 
                 }
+
                 .right-line {
                     font-family: "Comic Sans MS";
                     /*font-family: Humanist;*/
@@ -1131,7 +1181,9 @@
                         color: #fff;
                         text-shadow: none;
                     }
+
                     line-height: 25px;
+
                     .single {
                         font-size: 16px;
                         text-align: center;
@@ -1139,8 +1191,9 @@
                         border-radius: 3px;
                     }
                 }
+
                 .left-line {
-                    font-family: "Comic Sans MS",Humanist,serif;
+                    font-family: "Comic Sans MS", Humanist, serif;
                     /*font-family: Humanist;*/
                     display: flex;
                     flex-direction: row;
@@ -1153,7 +1206,9 @@
                         color: #fff;
                         text-shadow: none;
                     }
+
                     line-height: 25px;
+
                     .single {
                         font-size: 16px;
                         text-align: center;
@@ -1211,7 +1266,8 @@
                         align-items: center;
                         padding-bottom: 100px;
                     }
-                    .red{
+
+                    .red {
                         color: red;
                         background-color: #999999;
                     }

@@ -26,7 +26,7 @@
                             <div v-show="key === 'constant_pool'" class="constant_pool">
                                 <span class="add">+</span>
                                 <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length+1}})</span>
-                                <div v-for="(conVal,conKey,conI) in val" class="constant_item">
+                                <div v-for="(conVal,conKey,conI) in val" class="constant_item" v-if="false">
                                     <div><span class="add">+ </span>{{conKey+1}}:{{conVal.type}}</div>
                                     <div v-for="(conItemVal,conItemKey) in conVal" v-if="conItemKey !== 'type' && conItemKey !== 'link_value'"
                                          class="constant_item_tag">
@@ -48,6 +48,21 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div v-show="key === 'fields'" class="fields">
+                                <span class="add">+</span>
+                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>
+                            </div>
+                            <div v-show="key === 'interfaces'" class="interfaces">
+                                <span class="add">+</span>
+                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>
+                                <div v-for="(conVal,conKey,conI) in val" class="constant_item" >
+                                    <div>{{conKey}}.{{conVal.value}}-{{conVal.link_value}}</div>
+                                </div>
+                            </div>
+                            <div v-show="key === 'methods'" class="methods">
+                                <span class="add">+</span>
+                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>
                             </div>
                         </div>
                     </div>
@@ -1005,7 +1020,7 @@
                 float: left;
                 /*width: 20%;*/
                 width: 250px;
-                height: 100%;
+                height: 90%;
                 white-space: nowrap;
                 overflow-x: auto;
                 /*border-right: 1px solid #E4E4E4;*/

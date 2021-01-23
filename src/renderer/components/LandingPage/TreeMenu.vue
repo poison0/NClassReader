@@ -9,11 +9,13 @@
         <span @click="open(key)" v-show="!isMenuLoad[key]" class="add">+</span>
         <span @click="open(key)" v-show="isMenuLoad[key]" class="add">-</span>
         <span @click="open(key)">{{key}}</span>
-        <div class="stepDiv" v-for="(val1,key1,i1) in val">
-          <div>{{i1}}
-            <tree-menu :class-file="val1" :isLoad="isMenuLoad[key]"></tree-menu>
+<!--        <div v-if="val.isObject">-->
+          <div class="stepDiv" v-for="(val1,key1,i1) in val" v-if="!val1.isObject" >
+            <div v-show="isMenuLoad[key]" ><span @click="open(key+key1)">{{key1}}</span>
+              <tree-menu :class-file="val1" :isLoad="isMenuLoad[key+key1]"></tree-menu>
+            </div>
           </div>
-        </div>
+<!--        </div>-->
       </div>
     </div>
   </div>
@@ -39,9 +41,12 @@
       for (let key in this.classFile) {
         if(Object.prototype.toString.call(this.classFile[key]) === '[object Array]'){
           this.isMenuLoad[key] = false;
+          for (let i = 0; i < this.classFile[key].length; i++) {
+            this.isMenuLoad[key+i] = false;
+          }
         }
       }
-      // console.log(this.isMenuLoad)
+      console.log(this.isMenuLoad)
     },
     methods:{
       //选中一个元素

@@ -16,56 +16,57 @@
                     </div>
                 </div>
                 <div class="classFile">
-                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">
-                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem"
-                             @click="chooseItem(val,i)">
-                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
-                            <span :class="{yellow: chooseIndex === i }">{{key}}</span>
-                        </div>
-                        <div v-else class="classItem">
-                            <div v-show="key === 'constant_pool'" class="constant_pool">
-                                <span class="add">+</span>
-                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length+1}})</span>
-                                <div v-for="(conVal,conKey,conI) in val" class="constant_item" v-if="false">
-                                    <div><span class="add">+ </span>{{conKey+1}}:{{conVal.type}}</div>
-                                    <div v-for="(conItemVal,conItemKey) in conVal" v-if="conItemKey !== 'type' && conItemKey !== 'link_value'"
-                                         class="constant_item_tag">
-                                        <div v-if="conItemKey === 'tag'">
-                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
-                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>
-                                        </div>
-                                        <div v-else-if="conItemKey === 'CONSTANT_Class'">
-                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
-                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>
-                                        </div>
-                                        <div v-else-if="conItemKey === 'bytes'">
-                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
-                                            <span>{{conItemKey}}:{{conVal.link_value}}</span>
-                                        </div>
-                                        <div v-else>
-                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>
-                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-show="key === 'fields'" class="fields">
-                                <span class="add">+</span>
-                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>
-                            </div>
-                            <div v-show="key === 'interfaces'" class="interfaces">
-                                <span class="add">+</span>
-                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>
-                                <div v-for="(conVal,conKey,conI) in val" class="constant_item" >
-                                    <div>{{conKey}}.{{conVal.value}}-{{conVal.link_value}}</div>
-                                </div>
-                            </div>
-                            <div v-show="key === 'methods'" class="methods">
-                                <span class="add">+</span>
-                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>
-                            </div>
-                        </div>
-                    </div>
+<!--                    <div v-if="hexArray.length !== 0" v-for="(val,key,i) in classFile">-->
+<!--                        <div v-if="Object.prototype.toString.call(val) !== '[object Array]'" class="classItem"-->
+<!--                             @click="chooseItem(val,i)">-->
+<!--                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
+<!--                            <span :class="{yellow: chooseIndex === i }">{{key}}</span>-->
+<!--                        </div>-->
+<!--                        <div v-else class="classItem">-->
+<!--                            <div v-show="key === 'constant_pool'" class="constant_pool">-->
+<!--                                <span class="add">+</span>-->
+<!--                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length+1}})</span>-->
+<!--                                <div v-for="(conVal,conKey,conI) in val" class="constant_item" v-if="false">-->
+<!--                                    <div><span class="add">+ </span>{{conKey+1}}:{{conVal.type}}</div>-->
+<!--                                    <div v-for="(conItemVal,conItemKey) in conVal" v-if="conItemKey !== 'type' && conItemKey !== 'link_value'"-->
+<!--                                         class="constant_item_tag">-->
+<!--                                        <div v-if="conItemKey === 'tag'">-->
+<!--                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
+<!--                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>-->
+<!--                                        </div>-->
+<!--                                        <div v-else-if="conItemKey === 'CONSTANT_Class'">-->
+<!--                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
+<!--                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>-->
+<!--                                        </div>-->
+<!--                                        <div v-else-if="conItemKey === 'bytes'">-->
+<!--                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
+<!--                                            <span>{{conItemKey}}:{{conVal.link_value}}</span>-->
+<!--                                        </div>-->
+<!--                                        <div v-else>-->
+<!--                                            <img src="./img/wd1.jpg" height="20px" width="20px"><img/>-->
+<!--                                            <span>{{conItemKey}}:{{conItemVal.value}}</span>-->
+<!--                                        </div>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                            <div v-show="key === 'fields'" class="fields">-->
+<!--                                <span class="add">+</span>-->
+<!--                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>-->
+<!--                            </div>-->
+<!--                            <div v-show="key === 'interfaces'" class="interfaces">-->
+<!--                                <span class="add">+</span>-->
+<!--                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>-->
+<!--                                <div v-for="(conVal,conKey,conI) in val" class="constant_item" >-->
+<!--                                    <div>{{conKey}}.{{conVal.value}}-{{conVal.link_value}}</div>-->
+<!--                                </div>-->
+<!--                            </div>-->
+<!--                            <div v-show="key === 'methods'" class="methods">-->
+<!--                                <span class="add">+</span>-->
+<!--                                <span :class="{yellow: chooseIndex === i }">{{key}}({{val.length}})</span>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+                    <tree-menu :classFile="classFile" :isLoad="isLoad"></tree-menu>
                 </div>
                 <div class="bookArea">
                 </div>
@@ -851,6 +852,7 @@
                 let start = this.readIndex;
                 let array = this.hexArray;
                 let u = {
+                    isObject:true,
                     startIndex: start,
                     endIndex: 1,
                     hexArray: [],

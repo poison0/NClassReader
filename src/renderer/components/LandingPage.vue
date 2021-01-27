@@ -108,10 +108,10 @@
     import "wired-button";
     import "wired-divider";
     import "wired-card";
-
+    import Vue from 'vue'
     const {dialog} = require('electron').remote;
     const remote = require('electron').remote;
-
+    import PubSub from 'pubsub-js';
     export default {
         name: 'landing-page',
         components: {TreeMenu},
@@ -161,6 +161,9 @@
             //监视页面最大化
             remote.getCurrentWindow().on('unmaximize', function () {
                 self.isMaxWindow = false;
+            })
+            PubSub.subscribe("chooseItem",(event,val)=>{
+                this.chooseItem(val)
             })
 
         },
@@ -212,11 +215,11 @@
                     })
             },
             //选中一个元素
-            chooseItem(val, i) {
-                // console.log(val)
+            chooseItem(val) {
+                console.log(val)
                 this.chooseStart = val.startIndex;
                 this.chooseEnd = val.endIndex;
-                this.chooseIndex = i;
+                // this.chooseIndex = i;
             },
             //创建树结构
             buildTree() {

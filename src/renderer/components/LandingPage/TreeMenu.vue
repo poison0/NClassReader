@@ -1,26 +1,25 @@
 <template>
     <div>
         <div v-if="isLoad" v-for="(val,key,i) in classFile">
-            <div v-if="Object.prototype.toString.call(val) !== '[object Array]' && key !== 'type' && key !== 'link_value'"
+            <div v-if="Object.prototype.toString.call(val) !== '[object Array]' && key !== 'type' && key !== 'link_value' && key !== 'attr'"
                  class="stepDiv" @click="chooseItem(val,i,1)">
-                <span :class="[{yellow: chooseIndex === i },'tag']" :title="val.typeName">|-❖ {{key}}</span>
+                <span :class="[{yellow: chooseIndex === i },'tag']" :title="val.typeName">|-❖ {{key}}{{val.attrStr}}</span>
             </div>
-            <div  v-if="Object.prototype.toString.call(val) === '[object Array]'" class="classItem" @click="chooseItem(val,i,2)">
-
-<!--                常量池中不包含0-->
-                <span v-if="key === 'constant_pool'" class="tag" @click="open(key)">
+            <div  v-if="Object.prototype.toString.call(val) === '[object Array]'" class="classItem" >
+                <!--常量池中不包含0-->
+                <span v-if="key === 'constant_pool'" class="tag" @click="open(key,val,i)">
                     <span v-show="!isMenuLoad[key]" class="add">►</span>
                     <span v-show="isMenuLoad[key]" class="add">▼</span>
                     {{key}}[{{val.length+1}}]
                 </span>
-                <span v-else class="tag" @click="open(key)">
+                <span v-else class="tag" @click="open(key,val,i)" >
                     <span v-show="!isMenuLoad[key]" class="add">►</span>
                     <span v-show="isMenuLoad[key]" class="add">▼</span>
                     {{key}}[{{val.length}}]
                 </span>
                 <div class="stepDiv" v-for="(val1,key1,i1) in val">
                     <div  v-show="isMenuLoad[key]" v-if="!val1.isObject">
-                        <span class="tag" @click="open(key+key1)">
+                        <span class="tag" @click="open(key+key1,val1,i)">
                             <span v-show="!isMenuLoad[key+key1]" class="add">►</span>
                             <span v-show="isMenuLoad[key+key1]" class="add">▼</span>
                             {{key1+1}}:{{val1.type}}
@@ -29,7 +28,7 @@
                         <tree-menu :class-file="val1" :isLoad="isMenuLoad[key+key1]"></tree-menu>
                     </div>
                     <div  v-show="isMenuLoad[key]" v-else>
-                        <span class="tag">|-❖ {{key1+1}}</span>
+                        <span class="tag">|-❖ {{key1+1}}{{val.attrStr}}</span>
                     </div>
                 </div>
             </div>
@@ -86,16 +85,21 @@
                     this.isCurrent = true;
                     PubSub.publish("chooseItem", val)
                 }else{
-
+                    this.chooseIndex = i;
+                    this.isCurrent = true;
+                    PubSub.publish("chooseItem", val)
                 }
             },
             getFirstAttribute(data){
                 for (var key in data)
                     return data[key];
             },
-            open(key) {
+            open(key,val,i) {
+                console.log(val)
+                console.log(1111)
                 this.isMenuLoad[key] = !this.isMenuLoad[key];
                 this.$forceUpdate()
+                this.chooseItem(val.attr,i,2)
             }
         }
     }

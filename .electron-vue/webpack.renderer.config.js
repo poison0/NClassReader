@@ -28,7 +28,7 @@ let whiteListedModules = [
   'vuex-electron',
   'element-ui',
   'ant-design-vue',
-    'pubsub-js'
+  'pubsub-js'
 ]
 
 let rendererConfig = {

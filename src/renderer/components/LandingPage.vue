@@ -114,12 +114,12 @@
             remote.getCurrentWindow().on('unmaximize', function () {
                 self.isMaxWindow = false;
             })
-            PubSub.subscribe("chooseItem",(event,val)=>{
+            PubSub.subscribe("chooseItem", (event, val) => {
                 this.chooseItem(val)
             })
         },
         methods: {
-            open(){
+            open() {
                 this.isLoad = !this.isLoad
             },
             // 窗口最小化
@@ -148,6 +148,7 @@
                         title: "class文件", filters: [{name: 'class', extensions: ['class', 'CLASS']}]
                     }, (filePath) => {
                         if (filePath) {
+                            self.blanking()
                             getBinaryInfo(filePath[0], (buf) => {
                                 var offset = 0;
                                 while (offset < buf.length) {
@@ -168,12 +169,42 @@
                         }
                     })
             },
+            //置空数据
+            blanking() {
+                //16进制数组
+                this.hexArray = []
+                //asc数组
+                this.ascArray = []
+                this.pageHeight = window.innerHeight
+                this.classFile = {
+                    magic: {},//魔数
+                    minor_version: {},//次版本号
+                    major_version: {},//主版本号
+                    constant_pool_count: {},//常量池个数
+                    constant_pool: [],//常量池
+                    access_flags: {},//类访问标志
+                    this_class: {},//类索引
+                    super_class: {},//父类索引
+                    interfaces_count: {},//接口计数器
+                    interfaces: [],//接口表
+                    fields_count: {},//字段计数器
+                    fields: [],//字段表
+                    methods_count: {},//方法计数器
+                    methods: [],//方法表
+                    attribute_count: {},//属性表计数器
+                    attributes: []//属性表
+                }
+                this.readIndex = 0//解析时读取的指针
+                this.chooseStart = 0//鼠标选中的开始索引
+                this.chooseEnd = 0//鼠标选中的结束
+                this.chooseIndex = -1//选中属性的index
+                this.isMaxWindow = false
+                this.isLoad = false
+            },
             //选中一个元素
             chooseItem(val) {
-                console.log(val)
                 this.chooseStart = val.startIndex;
                 this.chooseEnd = val.endIndex;
-                // this.chooseIndex = i;
             },
             //创建树结构
             buildTree() {
@@ -203,17 +234,17 @@
             //读取次版本号
             getMinorVersion() {
                 this.classFile.minor_version = this.getUFields(2, "副版本号")
-                this.classFile.minor_version.attrStr = ": "+this.classFile.minor_version.value
+                this.classFile.minor_version.attrStr = ": " + this.classFile.minor_version.value
             },
             //读取主版本号
             getMajorVersion() {
                 this.classFile.major_version = this.getUFields(2, "主版本号")
-                this.classFile.major_version.attrStr = ": "+this.classFile.major_version.value
+                this.classFile.major_version.attrStr = ": " + this.classFile.major_version.value
             },
             //读取常量池个数
             getConstantPoolCount() {
                 this.classFile.constant_pool_count = this.getUFields(2, "常量池计数器")
-                this.classFile.constant_pool_count.attrStr = ": "+this.classFile.constant_pool_count.value
+                this.classFile.constant_pool_count.attrStr = ": " + this.classFile.constant_pool_count.value
             },
             //读取常量池
             getConstantPool() {
@@ -233,35 +264,35 @@
                         switch (arg) {
                             case 0x0001:
                                 this.classFile.access_flags["sign"].push("ACC_PUBLIC");
-                                this.classFile.access_flags.attrStr += " "+"public"
+                                this.classFile.access_flags.attrStr += " " + "public"
                                 break;
                             case 0x0010:
                                 this.classFile.access_flags["sign"].push("ACC_FINAL");
-                                this.classFile.access_flags.attrStr += " "+"final"
+                                this.classFile.access_flags.attrStr += " " + "final"
                                 break;
                             case 0x0020:
                                 this.classFile.access_flags["sign"].push("ACC_SUPER");
-                                this.classFile.access_flags.attrStr += " "+"super"
+                                this.classFile.access_flags.attrStr += " " + "super"
                                 break;
                             case 0x0200:
                                 this.classFile.access_flags["sign"].push("ACC_INTERFACE");
-                                this.classFile.access_flags.attrStr += " "+"interface"
+                                this.classFile.access_flags.attrStr += " " + "interface"
                                 break;
                             case 0x0400:
                                 this.classFile.access_flags["sign"].push("ACC_ABSTRACT");
-                                this.classFile.access_flags.attrStr += " "+"abstract"
+                                this.classFile.access_flags.attrStr += " " + "abstract"
                                 break;
                             case 0x1000:
                                 this.classFile.access_flags["sign"].push("ACC_SYNTHETIC");
-                                this.classFile.access_flags.attrStr += " "+"synthetic"
+                                this.classFile.access_flags.attrStr += " " + "synthetic"
                                 break;
                             case 0x2000:
                                 this.classFile.access_flags["sign"].push("ACC_ANNOTATION");
-                                this.classFile.access_flags.attrStr += " "+"annotation"
+                                this.classFile.access_flags.attrStr += " " + "annotation"
                                 break;
                             case 0x4000:
                                 this.classFile.access_flags["sign"].push("ACC_ENUM");
-                                this.classFile.access_flags.attrStr += " "+"enum"
+                                this.classFile.access_flags.attrStr += " " + "enum"
                                 break;
                         }
                     }
@@ -357,9 +388,10 @@
                     descriptor_index: {},
                     attributes_count: {},
                     attribute_info: [],
-                    attr:{
-                        startIndex:this.readIndex
-                    }
+                    attr: {
+                        startIndex: this.readIndex
+                    },
+                    attrStr: "",
                 }
                 //TODO 方法访问标志
                 field.access_flags = this.getUFields(2, "标志");
@@ -376,6 +408,7 @@
                     endIndex: endIndex,
                 };
                 field.attr["endIndex"] = this.readIndex;
+                field.attrStr = ":" + this.classFile.constant_pool[field.name_index.value - 1].link_value
                 return field;
             },
             //读取一个字段
@@ -386,8 +419,8 @@
                     descriptor_index: {},
                     attributes_count: {},
                     attribute_info: [],
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     }
                 }
                 //TODO 字段访问标志
@@ -412,8 +445,8 @@
                 let attr = {
                     attribute_name_index: {},
                     attribute_length: {},
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     }
                 };
                 attr.attribute_name_index = this.getUFields(2, "属性名");
@@ -424,43 +457,57 @@
                 switch (attr.link_value) {
                     case "ConstantValue":
                         lastAttr = this.getAttrConstantValue();
+                        attr.attrStr = ":ConstantValue";
                         break;
                     case "Code":
                         lastAttr = this.getAttrCode();
+                        attr.attrStr = ":Code";
                         break;
                     case "Exceptions":
                         lastAttr = this.getAttrExceptions();
+                        attr.attrStr = ":Exceptions";
                         break;
                     case "LineNumberTable":
                         lastAttr = this.getAttrLineNumberTable();
+                        attr.attrStr = ":LineNumberTable";
                         break;
                     case "InnerClasses":
                         lastAttr = this.getAttrInnerClasses();
+                        attr.attrStr = ":InnerClasses";
                         break;
                     case "Deprecated"://只有有或者没有的区别
+                        attr.attrStr = ":Deprecated";
                         break;
                     case "Synthetic"://只有有或者没有的区别
+                        attr.attrStr = ":Synthetic";
                         break;
                     case "EnclosingMethod":
                         lastAttr = this.getAttrEnclosingMethod();
+                        attr.attrStr = ":EnclosingMethod";
                         break;
                     case "Signature":
                         lastAttr = this.getAttrSignature();
+                        attr.attrStr = ":Signature";
                         break;
                     case "SourceFile":
                         lastAttr = this.getAttrSourceFile();
+                        attr.attrStr = ":SourceFile";
                         break;
                     case "LocalVariableTable":
                         lastAttr = this.getAttrLocalVariableTable();
+                        attr.attrStr = ":LocalVariableTable";
                         break;
                     case "LocalVariableTypeTable":
                         lastAttr = this.getAttrLocalVariableTypeTable();
+                        attr.attrStr = ":LocalVariableTypeTable";
                         break;
                     case "RuntimeVisibleAnnotations":
                         lastAttr = this.getAttrRuntimeVisibleAnnotations();
+                        attr.attrStr = ":RuntimeVisibleAnnotations";
                         break;
                     case "RuntimeVisibleParameterAnnotations":
                         lastAttr = this.getAttrRuntimeVisibleParameterAnnotations();
+                        attr.attrStr = ":RuntimeVisibleParameterAnnotations";
                         break;
                     default:
                         //遇到不认识的属性，直接跳过
@@ -475,8 +522,8 @@
             //获取Code属性
             getAttrCode() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     max_stack: this.getUFields(2, "方法执行的最大深度"),
                     max_locals: this.getUFields(2, "局部变量个数"),
@@ -531,8 +578,8 @@
             //获取RuntimeVisibleParameterAnnotations属性
             getAttrRuntimeVisibleParameterAnnotations() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     num_parameters: this.getUFields(2, "形参注解数量"),
                     parameter_annotations: [],
@@ -565,8 +612,8 @@
             //获取RuntimeVisibleAnnotations属性
             getAttrRuntimeVisibleAnnotations() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     num_annotations: this.getUFields(2, "注解数量"),
                     annotations: [],
@@ -587,8 +634,8 @@
             //获取annotation对象
             getAnnotation() {
                 let annotation = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     //TODO utf8索引
                     type_index: this.getUFields(2, "索引"),
@@ -599,8 +646,8 @@
                 let startIndex = this.readIndex;
                 for (let i = 0; i < annotation.num_element_value_pairs.value; i++) {
                     let element = {
-                        attr:{
-                            startIndex:this.readIndex
+                        attr: {
+                            startIndex: this.readIndex
                         },
                         element_name_index: this.getUFields(2, "索引"),
                         element_value: this.getElementValue()
@@ -619,8 +666,8 @@
             //获取elementValue字段
             getElementValue() {
                 let element_value = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     tag: this.getUFields(1, "值类型"),
                 }
@@ -686,8 +733,8 @@
             //获取LocalVariableTypeTable属性
             getAttrLocalVariableTypeTable() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     local_variable_type_table_length: this.getUFields(2, "成员数量"),
                     local_variable_type_table: [],
@@ -697,8 +744,8 @@
                 let startIndex = this.readIndex;
                 for (let i = 0; i < attr.local_variable_type_table_length.value; i++) {
                     let table = {
-                        attr:{
-                            startIndex:this.readIndex
+                        attr: {
+                            startIndex: this.readIndex
                         },
                         start_pc: this.getUFields(2, "索引"),
                         length: this.getUFields(2, "索引"),
@@ -722,8 +769,8 @@
             //获取LocalVariableTable属性
             getAttrLocalVariableTable() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     local_variable_table_length: this.getUFields(2, "成员数量"),
                     local_variable_table: []
@@ -752,8 +799,8 @@
             //获取SourceFile属性
             getAttrSourceFile() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     //TODO utf8索引
                     sourcefile_index: this.getUFields(2, "源文件名")
@@ -772,8 +819,8 @@
             //获取EnclosingMethod属性 局部类或匿名类才有
             getAttrEnclosingMethod() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     class_index: this.getUFields(2, "内层类"),
                     //TODO nameAndType结构
@@ -786,8 +833,8 @@
             //获取InnerClasses属性
             getAttrInnerClasses() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     number_of_classes: {},
                     classes: []
@@ -798,8 +845,8 @@
                 let startIndex = this.readIndex;
                 for (let i = 0; i < attr.number_of_classes.value; i++) {
                     let clazz = {
-                        attr:{
-                            startIndex:this.readIndex
+                        attr: {
+                            startIndex: this.readIndex
                         },
                         inner_class_info_index: this.getUFields(2, "内部类符号引用"),
                         outer_class_info_index: this.getUFields(2, "宿主类符号引用"),
@@ -823,8 +870,8 @@
             //获取LineNumberTable属性
             getAttrLineNumberTable() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     line_number_table_length: {},
                     line_number_table: []
@@ -834,8 +881,8 @@
                 let startIndex = this.readIndex;
                 for (let i = 0; i < attr.line_number_table_length.value; i++) {
                     let line_number_info = {
-                        attr:{
-                            startIndex:this.readIndex
+                        attr: {
+                            startIndex: this.readIndex
                         },
                         start_pc: this.getUFields(2, "字节码行号"),
                         line_number: this.getUFields(2, "java源码行号")
@@ -854,8 +901,8 @@
             //获取Exceptions属性
             getAttrExceptions() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     number_of_exceptions: {},
                     exception_index_table: []
@@ -879,8 +926,8 @@
             //获取ConstantValue属性
             getAttrConstantValue() {
                 let attr = {
-                    attr:{
-                        startIndex:this.readIndex
+                    attr: {
+                        startIndex: this.readIndex
                     },
                     constantValue_index: {},
                 };
@@ -896,6 +943,7 @@
                 for (let i = 0; i < num; i++) {
                     let addr = this.getUFields(2, "接口表");
                     addr["link_value"] = this.hexCharCodeToStr(this.getConstantClassStr(addr.value));
+                    addr["attrStr"] = ": " + addr.link_value;
                     interfaceAttr.push(addr)
                 }
                 let endIndex = this.readIndex;
@@ -912,82 +960,102 @@
                 let startIndex = this.readIndex;
                 for (let i = 1; i <= num - 1; i++) {
                     let attr = {
-                        attr:{
-                            startIndex : this.readIndex
+                        attr: {
+                            startIndex: this.readIndex
                         }
                     };
                     //获取tag值
                     let tag = this.getUFields(1, "值")
+                    tag.attrStr = ":"+tag.value
                     attr["tag"] = tag;
                     switch (tag.value) {
                         case 1:
-                            attr["type"] = "CONSTANT_utf8"
+                            attr["attrStr"] = ":CONSTANT_utf8"
                             let length = this.getUFields(2, "长度")
                             attr["length"] = length;
+                            attr.length.attrStr = ":"+attr.length.value
                             //获取内容
                             attr["bytes"] = this.getStr(length.value, "字符串")
                             attr['link_value'] = this.hexCharCodeToStr(attr.bytes.hexArray.join(""))
+                            attr.bytes.attrStr = ":"+attr.link_value
                             break;
                         case 3:
-                            attr["type"] = "CONSTANT_Integer"
+                            attr["attrStr"] = ":CONSTANT_Integer"
                             attr["bytes"] = this.getUFields(4, "整型")
+                            attr.attrStr = ":"+attr.bytes.value
                             break;
                         case 4:
-                            attr["type"] = "CONSTANT_Float"
+                            attr["attrStr"] = ":CONSTANT_Float"
                             attr["bytes"] = this.getUFields(4, "浮点型")
                             break;
                         case 5:
-                            attr["type"] = "CONSTANT_Long"
+                            attr["attrStr"] = ":CONSTANT_Long"
                             attr["high_bytes"] = this.getUFields(4, "长整型")
+                            attr.high_bytes.attrStr = ":"+attr.high_bytes.value
                             attr["low_bytes"] = this.getUFields(4, "长整型")
+                            attr.low_bytes.attrStr = ":"+attr.low_bytes.value
                             break;
                         case 6:
-                            attr["type"] = "CONSTANT_Double"
+                            attr["attrStr"] = ":CONSTANT_Double"
                             attr["high_bytes"] = this.getUFields(4, "双精度浮点型")
                             attr["low_bytes"] = this.getUFields(4, "双精度浮点型")
                             break;
                         case 7:
-                            attr["type"] = "CONSTANT_Class"
+                            attr["attrStr"] = ":CONSTANT_Class"
                             //对常量池的一个有效索引
                             attr["name_index"] = this.getUFields(2, "类或接口的符号引用")
+                            attr.name_index.attrStr = ":"+attr.name_index.value;
                             break;
                         case 8:
-                            attr["type"] = "CONSTANT_String"
+                            attr["attrStr"] = ":CONSTANT_String"
                             attr["string_index"] = this.getUFields(2, "字符串类型字面量")
+                            attr.string_index.attrStr = ":"+attr.string_index.value;
                             break;
                         case 9:
-                            attr["type"] = "CONSTANT_Fieldref"
+                            attr["attrStr"] = ":CONSTANT_Fieldref"
                             attr["class_index"] = this.getUFields(2, "字段的符号引用")
+                            attr.class_index.attrStr = ":"+attr.class_index.value;
                             attr["name_and_type_index"] = this.getUFields(2, "字段的名称和描述符")
+                            attr.name_and_type_index.attrStr = ":"+attr.name_and_type_index.value;
                             break;
                         case 10:
-                            attr["type"] = "CONSTANT_Methodref"
+                            attr["attrStr"] = ":CONSTANT_Methodref"
                             attr["class_index"] = this.getUFields(2, "类中方法的符号引用")
+                            attr.class_index.attrStr = ":"+attr.class_index.value;
                             attr["name_and_type_index"] = this.getUFields(2, "类中方法的名称和描述符")
+                            attr.name_and_type_index.attrStr = ":"+attr.name_and_type_index.value;
                             break;
                         case 11:
-                            attr["type"] = "CONSTANT_InterfaceMethodref"
+                            attr["attrStr"] = ":CONSTANT_InterfaceMethodref"
                             attr["class_index"] = this.getUFields(2, "接口中方法的符号引用")
+                            attr.class_index.attrStr = ":"+attr.class_index.value;
                             attr["name_and_type_index"] = this.getUFields(2, "接口中方法的名称和描述符")
+                            attr.name_and_type_index.attrStr = ":"+attr.name_and_type_index.value;
                             break;
                         case 12:
-                            attr["type"] = "CONSTANT_NameAndType"
+                            attr["attrStr"] = ":CONSTANT_NameAndType"
                             attr["name_index"] = this.getUFields(2, "方法或字段的部分符号引用")
+                            attr.name_index.attrStr = ":"+attr.name_index.value;
                             attr["descriptor_index"] = this.getUFields(2, "有效的字段描述符或者方法描述符")
+                            attr.descriptor_index.attrStr = ":"+attr.descriptor_index.value;
                             break;
                         case 15:
-                            attr["type"] = "CONSTANT_MethodHandle"
+                            attr["attrStr"] = ":CONSTANT_MethodHandle"
                             attr["reference_kind"] = this.getUFields(1, "句柄类型")
                             attr["reference_index"] = this.getUFields(2, "句柄名称")
+                            attr.reference_index.attrStr = ":"+attr.reference_index.value;
                             break;
                         case 16:
-                            attr["type"] = "CONSTANT_MethodType"
+                            attr["attrStr"] = ":CONSTANT_MethodType"
                             attr["descriptor_index"] = this.getUFields(1, "方法的描述符")
+                            attr.descriptor_index.attrStr = ":"+attr.descriptor_index.value;
                             break;
                         case 18:
-                            attr["type"] = "CONSTANT_InvokeDynamic"
+                            attr["attrStr"] = ":CONSTANT_InvokeDynamic"
                             attr["bootstrap_method_attr_index"] = this.getUFields(2, "引导方法表的索引")
+                             attr.bootstrap_method_attr_index.attrStr = ":"+attr.bootstrap_method_attr_index.value;
                             attr["name_and_type_index"] = this.getUFields(2, "方法名和方法描述符")
+                             attr.name_and_type_index.attrStr = ":"+attr.name_and_type_index.value;
                             break;
                     }
                     attr.attr["endIndex"] = this.readIndex;
@@ -1038,7 +1106,7 @@
                 let start = this.readIndex;
                 let array = this.hexArray;
                 let u = {
-                    isObject:true,
+                    isObject: true,
                     startIndex: start,
                     endIndex: 1,
                     hexArray: [],
@@ -1472,7 +1540,7 @@
 
                     .red {
                         color: red;
-                        background-color: #999999;
+                        background-color: #E4E4E4;
                     }
 
                     .-book-item {

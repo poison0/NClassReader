@@ -1,47 +1,53 @@
 <template>
     <div class="page">
         <div class="header">
-            <div class="title">ClassReader</div>
-            <wired-card class="titleBuC" @click="closeWindow()">x</wired-card>
-            <wired-card v-show="!isMaxWindow" class="titleBu" @click="maxWindow()">□</wired-card>
-            <wired-card v-show="isMaxWindow" class="titleBu" @click="maxWindow()">=</wired-card>
-            <wired-card class="titleBu" @click="minWindow()">-</wired-card>
+            <div class="title">ClassReader💯❗</div>
+            <div class="titleBuC" @click="closeWindow()">❌️️</div>
+            <div v-show="!isMaxWindow" class="titleBu" @click="maxWindow()">⚪</div>
+            <div v-show="isMaxWindow" class="titleBu" @click="maxWindow()">❐</div>
+            <div class="titleBu" @click="minWindow()">➖</div>
         </div>
-        <wired-divider elevation="1"></wired-divider>
+        <wired-divider elevation="1" :style="'width:'+(pageWidth)+'px'" ></wired-divider>
         <div class="content">
             <div class="-left-content">
                 <div class="bottomNav">
-                    <div class="bottomDiv">
-                        <wired-button class="wired-button" elevation="3" v-on:click="upload()">upload</wired-button>
+                    <div class="bottomDiv" v-if="hexArray.length === 0">
+                        <wired-button class="wired-button" elevation="3" v-on:click="upload()">📫 file</wired-button>
+                    </div>
+                    <div class="bottomDiv" v-else>
+                        <wired-button class="wired-button" elevation="3" v-on:click="upload()">📭 file</wired-button>
                     </div>
                 </div>
-                <div class="classFile" v-if="hexArray.length !== 0">
-                    <span v-show="isLoad" class="add" @click="open()">▼classFile</span>
-                    <span v-show="!isLoad" class="add" @click="open()">►classFile</span>
+                <div class="classFile" v-if="hexArray.length !== 0 && !isNotClass">
+                    <span v-show="!isLoad" class="add" @click="open()">📎classFile  <span>🙈</span></span>
+                    <span v-show="isLoad" class="add" @click="open()">🧷classFile  <span>🙉</span></span>
                     <tree-menu :classFile="classFile" :isLoad="isLoad"></tree-menu>
                 </div>
                 <div class="bookArea">
                 </div>
             </div>
             <div class="-right-content">
-                <div class="-right-bar">
+                <div class="-right-bar" v-if="hexArray.length !== 0">
+                    <wired-item selected>Class file</wired-item>
+                    <wired-item >Report</wired-item>
+<!--                    🍇🍈🍉🍊🍋🍌🍍🥭🍎🍏🍐🍑🍒🍓🥑🍆🥔🥕🌽🌶️🥒🥬🥦🧄🧅🍄🥜-->
                 </div>
                 <div class="-right-content-book" :style="'height:'+(pageHeight-90)+'px'">
-                    <wired-card v-if="ascArray.length !== 0" elevation="4" style="margin-right: 10px">
+                    <wired-card v-if="ascArray.length !== 0" elevation="2" style="margin-right: 10px">
                         <div class="left-line">
-                            <div v-for="count in 27" class="single">
-                                00000000
+                            <div v-for="count in indexArray" class="single">
+                                {{count}}H
                             </div>
                         </div>
                     </wired-card>
-                    <wired-card v-if="hexArray.length !== 0" elevation="4" style="margin-right: 10px">
+                    <wired-card v-if="hexArray.length !== 0" elevation="2" style="margin-right: 10px">
                         <div class="row-line">
                             <div v-for="(hex,index) in hexArray" class="single">
                                 <div :class="{red:(index< chooseEnd && index>=chooseStart)}">{{hex.toUpperCase()}}</div>
                             </div>
                         </div>
                     </wired-card>
-                    <wired-card v-if="ascArray.length !== 0" elevation="4">
+                    <wired-card v-if="ascArray.length !== 0" elevation="2">
                         <div class="right-line">
                             <div v-for="(hex,index) in ascArray" class="single">
                                 <div :class="{red:(index<chooseEnd && index>=chooseStart)}">{{hex}}</div>
@@ -51,6 +57,10 @@
                 </div>
             </div>
         </div>
+        <wired-dialog :open="isDialog">
+            <div class="dialogDiv"><span class="dialogTitleBuC" v-on:click="closeDialog()">❌️</span><br/><br/>
+            <span class="dialogText">{{dialogText}}</span></div>
+        </wired-dialog>
     </div>
 </template>
 
@@ -60,6 +70,8 @@
     import "wired-button";
     import "wired-divider";
     import "wired-card";
+    import "wired-item";
+    import "wired-dialog";
     import PubSub from 'pubsub-js';
 
     const {dialog} = require('electron').remote;
@@ -73,7 +85,11 @@
                 hexArray: [],
                 //asc数组
                 ascArray: [],
+                //索引数组
+                indexArray: [],
+                isDialog:false,
                 pageHeight: window.innerHeight,
+                pageWidth: window.innerWidth,
                 classFile: {
                     magic: {},//魔数
                     minor_version: {},//次版本号
@@ -98,6 +114,8 @@
                 chooseIndex: -1,//选中属性的index
                 isMaxWindow: false,
                 isLoad: false,
+                dialogText:"",
+                isNotClass:false,
             }
         },
         mounted() {
@@ -105,6 +123,7 @@
             //监视页面大小变化
             remote.getCurrentWindow().on('resize', (a) => {
                 self.pageHeight = window.innerHeight;
+                self.pageWidth = window.innerWidth;
             })
             //监视页面最大化
             remote.getCurrentWindow().on('maximize', function () {
@@ -121,6 +140,9 @@
         methods: {
             open() {
                 this.isLoad = !this.isLoad
+            },
+            closeDialog() {
+                this.isDialog = !this.isDialog
             },
             // 窗口最小化
             minWindow() {
@@ -162,12 +184,31 @@
                                     } else {
                                         self.ascArray.push(".");
                                     }
+                                    if (offset % 16 === 0) {
+                                        self.indexArray.push(self.padding(offset));
+                                    }
                                     offset++;
                                 }
-                                self.buildTree()
+                                console.log(self.hexArray)
+                                if (self.hexArray[0] !== 'ca' || self.hexArray[1] !== 'fe' || self.hexArray[2] !== 'ba' || self.hexArray[3] !== 'be') {
+                                    self.dialogText = "不是class文件";
+                                    self.isDialog = true;
+                                    self.isNotClass = true;
+                                }
+                                self.buildTree();
+                                console.log(self.indexArray)
                             })
                         }
                     })
+            },
+
+            padding(num) {
+                let length = 8;
+                let num16 = num.toString(16);
+                for(let len = num16.length; len < length; len = num16.length) {
+                    num16 = "0" + num16;
+                }
+                return num16;
             },
             //置空数据
             blanking() {
@@ -176,6 +217,7 @@
                 //asc数组
                 this.ascArray = []
                 this.pageHeight = window.innerHeight
+                this.indexArray= [],
                 this.classFile = {
                     magic: {},//魔数
                     minor_version: {},//次版本号
@@ -200,6 +242,7 @@
                 this.chooseIndex = -1//选中属性的index
                 this.isMaxWindow = false
                 this.isLoad = false
+                this.isNotClass = false;
             },
             //选中一个元素
             chooseItem(val) {
@@ -224,7 +267,6 @@
                 this.getMethodInfo();
                 this.getAttributeCount();
                 this.getAttributes();
-                console.log(this.classFile)
                 this.isLoad = true;
             },
             //读取魔数
@@ -1214,17 +1256,17 @@
             -webkit-app-region: drag;
 
             .title {
-                color: #0F4DA8;
+                /*color: #437DD4;*/
                 float: left;
                 /*color: #437DD4;*/
                 /*color: #6A94D4;*/
-                /*color: #FFA110;*/
+                color: #FFA110;
                 /*font-family: Calibri, "Times New Roman", serif;*/
                 font-family: "Gloria Hallelujah", sans-serif;
                 font-size: 20px;
                 font-weight: bolder;
                 margin-left: 20px;
-                width: 100px;
+                width: 200px;
                 height: 40px;
                 line-height: 48px;
             }
@@ -1236,7 +1278,7 @@
                 height: 40px;
                 float: right;
                 text-align: center;
-                line-height: 15px;
+                line-height: 40px;
                 cursor: pointer;
                 -webkit-app-region: no-drag;
 
@@ -1252,7 +1294,7 @@
                 height: 40px;
                 float: right;
                 text-align: center;
-                line-height: 15px;
+                line-height: 40px;
                 cursor: pointer;
                 -webkit-app-region: no-drag;
 
@@ -1260,6 +1302,27 @@
                     background-color: red;
                 }
             }
+        }
+        .dialogTitleBuC {
+            font-size: 20px;
+            width: 30px;
+            height: 30px;
+            float: right;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+            &:hover {
+                background-color: red;
+            }
+        }
+        .dialogDiv{
+            width: 200px;
+            height: 100px;
+            text-align:center
+        }
+        .dialogText{
+            font-family: "Gloria Hallelujah", sans-serif;
+            font-size: 20px;
         }
 
         .content {
@@ -1470,7 +1533,7 @@
                     flex-direction: row;
                     flex-wrap: wrap;
                     cursor: text;
-                    max-width: 80px;
+                    max-width: 100px;
                     /*color: lightyellow;*/
                     *::selection {
                         background: none repeat scroll 0 0 #FFA110;
@@ -1492,8 +1555,11 @@
                     flex-shrink: 0;
                     display: flex;
                     flex-direction: row;
-                    justify-content: space-between;
+                    /*justify-content: space-between;*/
                     height: 40px;
+                    line-height: 40px;
+                    margin-left: 130px;
+                    font-family: "Comic Sans MS";
                     /*background-color: #EFEFEF;*/
                     /*background-color: #FFA400;*/
                     /*border-bottom: 1px solid #E4E4E4;*/

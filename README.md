@@ -8,7 +8,7 @@ java类文件结构查看器
 >⚔️ 选择前端来实现，是因为前端写页面比较简单，效果也要比java页面要好看。 
 
 ### 页面
-![图片](https://raw.githubusercontent.com/poison0/NClassReader/main/showPic/2021-01-31%20131048.jpg)
+![图片](https://github.com/poison0/NClassReader/blob/main/showPic/2021-01-31%20133036.jpg)
 
 ### 技术栈
 *   [electron](https://github.com/electron/electron)

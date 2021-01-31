@@ -1,4 +1,4 @@
-# NclassView 🐵
+# NclassReader 🐵
 ⚔️java类文件结构查看器，写这个的原因主要是因为要熟悉class文件结构。    
 >📑 遵循java8jvm规范解析，java8以后的暂时没有添加，以后可能会加上。    
 >📑 博客内容只包含如何解析class结构，不包含electron和相关依赖的使用方式，只包含逻辑代码。   
